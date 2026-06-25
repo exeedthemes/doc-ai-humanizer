@@ -42,6 +42,10 @@
                 </div>
             </div>
             <div class="header-actions">
+                <button id="btn-theme-toggle" class="theme-toggle" type="button" title="Toggle light mode" aria-label="Toggle light mode">
+                    <span class="theme-icon theme-icon-sun">☀</span>
+                    <span class="theme-icon theme-icon-moon">☾</span>
+                </button>
                 <div class="status-indicator">
                     <span class="pulse-dot"></span>
                     <span class="status-text">Integrity Review Active</span>
@@ -73,7 +77,7 @@
                     <div class="upload-overlay" id="upload-overlay">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
                         <h3>Drag & Drop Document</h3>
-                        <p>Drop your .txt or .pdf file here to import</p>
+                        <p>Drop .docx, .pdf, .txt, .md, .rtf, .html, .csv, or .json files here</p>
                     </div>
                 </div>
 
@@ -91,7 +95,7 @@
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                                 Import File
                             </label>
-                            <input type="file" id="file-upload" accept=".txt,.pdf">
+                            <input type="file" id="file-upload" accept=".docx,.pdf,.txt,.md,.markdown,.rtf,.html,.htm,.csv,.tsv,.json">
                         </div>
                     </div>
 
@@ -111,8 +115,8 @@
                             <label for="plagiarism-api-mode">Similarity Check Mode</label>
                             <div class="custom-select-wrapper">
                                 <select id="plagiarism-api-mode">
-                                    <option value="local-sim" selected>Local Phrase Similarity (Offline)</option>
-                                    <option value="public-source">Public Source Lookup (Wikipedia & Crossref)</option>
+                                    <option value="public-source" selected>Public Source Lookup (Wikipedia & Crossref)</option>
+                                    <option value="local-sim">Local Phrase Similarity (Offline)</option>
                                 </select>
                             </div>
                         </div>
@@ -373,7 +377,7 @@
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                                             Upload Reference File
                                         </label>
-                                        <input type="file" id="compare-file-upload" accept=".txt,.pdf">
+                                        <input type="file" id="compare-file-upload" accept=".docx,.pdf,.txt,.md,.markdown,.rtf,.html,.htm,.csv,.tsv,.json">
                                     </div>
                                     <span id="compare-filename-label" class="filename-label">No reference file loaded</span>
                                     <button id="btn-run-compare" class="btn btn-primary" disabled>Run Comparison Check</button>
@@ -417,7 +421,7 @@
 
         <!-- Footer -->
         <footer class="app-footer">
-            <p>&copy; 2026 Verify.ai Academic Systems. Optimized for high-fidelity humanization & integrity checking.</p>
+            <p>&copy; 2026 Verify.ai Academic Systems. Built for document revision, similarity review, and integrity checking.</p>
             <div class="footer-links">
                 <a href="#about" class="footer-link">Documentation</a>
                 <span class="separator">•</span>
@@ -427,6 +431,8 @@
     </div>
     <!-- PDF.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- DOCX parser -->
+    <script src="https://unpkg.com/mammoth/mammoth.browser.min.js"></script>
     <!-- Main Script -->
     <script src="app.js"></script>
 </body>

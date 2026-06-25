@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dropZone = document.getElementById('drop-zone');
     const humanizeModeSelect = document.getElementById('humanize-mode');
     const plagiarismApiModeSelect = document.getElementById('plagiarism-api-mode');
+    const btnThemeToggle = document.getElementById('btn-theme-toggle');
 
     // Tab Elements
     const tabs = document.querySelectorAll('.tab-btn');
@@ -89,6 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentAnalysis = null;
     let humanizedOutputText = "";
     let referenceText = "";
+    const LARGE_DOCUMENT_WORD_THRESHOLD = 2500;
+    const LARGE_DOCUMENT_PREVIEW_CHARS = 45000;
+    const SUPPORTED_FILE_EXTENSIONS = new Set([
+        '.docx', '.pdf', '.txt', '.md', '.markdown', '.rtf', '.html', '.htm', '.csv', '.tsv', '.json'
+    ]);
 
     // Dictionary of common formulaic academic vocabulary and phrases.
     const AI_CLICHES = {
@@ -154,11 +160,13 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
     init();
 
     function init() {
+        applySavedTheme();
         textInput.addEventListener('input', handleTextInput);
         btnClear.addEventListener('click', clearText);
         btnSample.addEventListener('click', loadSampleText);
         btnScan.addEventListener('click', triggerScanSequence);
         btnHumanize.addEventListener('click', triggerHumanizeSequence);
+        btnThemeToggle.addEventListener('click', toggleTheme);
         
         fileUpload.addEventListener('change', handleFileUpload);
         btnCopyHumanized.addEventListener('click', copyHumanizedText);
@@ -197,13 +205,30 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 const file = files[0];
-                if (file.name.endsWith('.txt') || file.name.endsWith('.pdf')) {
+                if (isSupportedFile(file)) {
                     readFile(file);
                 } else {
-                    alert("Only text (.txt) and PDF (.pdf) documents are supported for drag & drop.");
+                    alert("Supported imports: DOCX, PDF, TXT, Markdown, RTF, HTML, CSV, TSV, and JSON.");
                 }
             }
         });
+    }
+
+    function applySavedTheme() {
+        const savedTheme = localStorage.getItem('verify-ai-theme');
+        const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        const useLight = savedTheme ? savedTheme === 'light' : prefersLight;
+        document.body.classList.toggle('light-mode', useLight);
+        btnThemeToggle.setAttribute('aria-label', useLight ? 'Switch to dark mode' : 'Switch to light mode');
+        btnThemeToggle.title = useLight ? 'Switch to dark mode' : 'Switch to light mode';
+    }
+
+    function toggleTheme() {
+        const useLight = !document.body.classList.contains('light-mode');
+        document.body.classList.toggle('light-mode', useLight);
+        localStorage.setItem('verify-ai-theme', useLight ? 'light' : 'dark');
+        btnThemeToggle.setAttribute('aria-label', useLight ? 'Switch to dark mode' : 'Switch to light mode');
+        btnThemeToggle.title = useLight ? 'Switch to dark mode' : 'Switch to light mode';
     }
 
     // Handle Text Input
@@ -219,6 +244,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         const isValid = wordCount >= 10;
         btnScan.disabled = !isValid;
         btnHumanize.disabled = !isValid;
+        currentAnalysis = null;
 
         // Reset outputs if text is cleared
         if (charCount === 0) {
@@ -248,37 +274,82 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         }
     }
 
-    // Read File content
-    function readFile(file) {
-        if (file.name.endsWith('.pdf')) {
-            readPDFFile(file);
-        } else {
-            readTextFile(file);
+    async function readFile(file) {
+        try {
+            const text = await extractTextFromFile(file, {
+                titlePrefix: 'Importing Document'
+            });
+            textInput.value = text;
+            handleTextInput();
+            switchTab('tab-detector');
+        } catch (err) {
+            console.error("File import error:", err);
+            alert(err.message || "Failed to import this file.");
+        } finally {
+            loadingSpinner.classList.add('hidden');
         }
     }
 
-    function readTextFile(file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            textInput.value = e.target.result;
-            handleTextInput();
-            switchTab('tab-detector');
-        };
-        reader.readAsText(file);
+    async function extractTextFromFile(file, options = {}) {
+        const extension = getFileExtension(file.name);
+        if (!SUPPORTED_FILE_EXTENSIONS.has(extension)) {
+            throw new Error("Supported imports: DOCX, PDF, TXT, Markdown, RTF, HTML, CSV, TSV, and JSON.");
+        }
+
+        if (extension === '.pdf') {
+            return readPDFFile(file, options);
+        }
+
+        if (extension === '.docx') {
+            return readDocxFile(file, options);
+        }
+
+        return readTextLikeFile(file, extension);
     }
 
-    function readPDFFile(file) {
+    function readTextLikeFile(file, extension) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                resolve(normalizeImportedText(e.target.result, extension));
+            };
+            reader.onerror = () => reject(new Error("Failed to read text file."));
+            reader.readAsText(file);
+        });
+    }
+
+    function normalizeImportedText(rawText, extension) {
+        const text = String(rawText || '');
+
+        if (extension === '.html' || extension === '.htm') {
+            const doc = new DOMParser().parseFromString(text, 'text/html');
+            return doc.body ? doc.body.textContent.replace(/\n{3,}/g, '\n\n').trim() : text;
+        }
+
+        if (extension === '.rtf') {
+            return text
+                .replace(/\\'[0-9a-fA-F]{2}/g, ' ')
+                .replace(/\\[a-zA-Z]+\d* ?/g, ' ')
+                .replace(/[{}]/g, ' ')
+                .replace(/\s{2,}/g, ' ')
+                .trim();
+        }
+
+        return text;
+    }
+
+    function readPDFFile(file, options = {}) {
         if (typeof pdfjsLib === 'undefined') {
-            alert("PDF library is not loaded. Please verify internet connection.");
-            return;
+            throw new Error("PDF library is not loaded. Please verify internet connection.");
         }
 
         // Show loading spinner
         loadingSpinner.classList.remove('hidden');
-        updateLoadingProgress(0, "Importing PDF Report...", "Reading file structure...");
+        updateLoadingProgress(0, options.titlePrefix || "Importing PDF Report...", "Reading file structure...");
 
-        const reader = new FileReader();
-        reader.onload = async function(e) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async function(e) {
             try {
                 const arrayBuffer = e.target.result;
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
@@ -308,17 +379,46 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                     fullText += pageText.trim() + '\n\n';
                 }
 
-                textInput.value = fullText;
-                handleTextInput();
-                loadingSpinner.classList.add('hidden');
-                switchTab('tab-detector');
+                resolve(fullText);
             } catch (err) {
                 console.error("PDF Parsing error: ", err);
-                alert("Failed to parse PDF file. Ensure it is not password-protected and contains copyable text layers.");
-                loadingSpinner.classList.add('hidden');
+                reject(new Error("Failed to parse PDF file. Ensure it is not password-protected and contains copyable text layers."));
             }
-        };
-        reader.readAsArrayBuffer(file);
+            };
+            reader.onerror = () => reject(new Error("Failed to read PDF file."));
+            reader.readAsArrayBuffer(file);
+        });
+    }
+
+    function readDocxFile(file, options = {}) {
+        if (typeof mammoth === 'undefined') {
+            throw new Error("DOCX parser is not loaded. Please verify internet connection.");
+        }
+
+        loadingSpinner.classList.remove('hidden');
+        updateLoadingProgress(0, options.titlePrefix || "Importing DOCX Document...", "Reading Word document...");
+
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    updateLoadingProgress(45, "Extracting DOCX Text...", "Converting document body to plain text...");
+                    const result = await mammoth.extractRawText({ arrayBuffer: e.target.result });
+                    const text = (result.value || '').trim();
+                    if (!text) {
+                        reject(new Error("No readable text found in this DOCX file."));
+                        return;
+                    }
+                    updateLoadingProgress(100, "DOCX Imported", "Text extraction complete.");
+                    resolve(text);
+                } catch (err) {
+                    console.error("DOCX parsing error:", err);
+                    reject(new Error("Failed to parse DOCX file. Ensure it is not corrupted or password-protected."));
+                }
+            };
+            reader.onerror = () => reject(new Error("Failed to read DOCX file."));
+            reader.readAsArrayBuffer(file);
+        });
     }
 
     // Switch active dashboard tab
@@ -440,6 +540,19 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         return patterns.reduce((count, pattern) => count + (text.match(pattern) || []).length, 0);
     }
 
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function getFileExtension(filename) {
+        const dotIndex = filename.lastIndexOf('.');
+        return dotIndex >= 0 ? filename.slice(dotIndex).toLowerCase() : '';
+    }
+
+    function isSupportedFile(file) {
+        return SUPPORTED_FILE_EXTENSIONS.has(getFileExtension(file.name));
+    }
+
     function escapeHtml(value) {
         return String(value)
             .replace(/&/g, '&amp;')
@@ -505,6 +618,15 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             /\bit is worth noting\b/gi
         ];
         const transitionCount = countPatternMatches(text, aiTransitionPatterns);
+        const aiStructurePatterns = [
+            /\bplays? (?:a|an) (?:crucial|vital|pivotal|important|key) role\b/gi,
+            /\bserves? as (?:a|an) (?:testament|example|illustration)\b/gi,
+            /\bin (?:today'?s|the modern) (?:world|era|landscape|society)\b/gi,
+            /\bthis (?:underscores|highlights|demonstrates|showcases)\b/gi,
+            /\bnot only\b[\s\S]{0,120}\bbut also\b/gi,
+            /\bit is (?:important|crucial|essential|vital) to (?:note|recognize|understand|consider)\b/gi
+        ];
+        const structureCount = countPatternMatches(text, aiStructurePatterns);
 
         // 2. Burstiness: sentence-length coefficient of variation is more stable than raw variance.
         const sentenceLengths = sentences.map(sentence => tokenizeWords(sentence).length).filter(length => length > 0);
@@ -515,9 +637,13 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
 
         // 3. Vocabulary predictability: combine lexical diversity, repetition, long words, and punctuation range.
         const uniqueWords = new Set(words);
+        const wordFrequency = words.reduce((counts, word) => {
+            counts[word] = (counts[word] || 0) + 1;
+            return counts;
+        }, {});
         const lexicalDiversity = wordCount > 0 ? uniqueWords.size / wordCount : 0;
         const hapaxRatio = wordCount > 0
-            ? words.filter(word => words.indexOf(word) === words.lastIndexOf(word)).length / wordCount
+            ? Object.values(wordFrequency).filter(count => count === 1).length / wordCount
             : 0;
         const longWordRatio = wordCount > 0 ? words.filter(word => word.length >= 8).length / wordCount : 0;
         const repeatedWordRatio = wordCount > 0 ? 1 - (uniqueWords.size / wordCount) : 0;
@@ -550,6 +676,8 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         const repeatedOpenerRatio = sentenceOpeners.length > 1
             ? Math.max(...Object.values(openerCounts)) / sentenceOpeners.length
             : 0;
+        const averageSentenceLengthRisk = clamp(Math.abs(averageLength - 22) * 3.5, 0, 60);
+        const sentenceCountRisk = sentences.length > 0 && sentences.length < 3 ? 30 : 0;
 
         const paragraphLengths = text.split(/\n{2,}/)
             .map(paragraph => tokenizeWords(paragraph).length)
@@ -561,6 +689,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         const predictabilityRisk = 100 - perplexityScore;
         const clicheRisk = clamp((clicheCount / Math.max(wordCount, 1)) * 1400, 0, 100);
         const transitionRisk = clamp((transitionCount / Math.max(sentences.length, 1)) * 80, 0, 100);
+        const structureRisk = clamp((structureCount / Math.max(sentences.length, 1)) * 120, 0, 100);
         const passiveRisk = passiveVoiceScore;
         const openerRisk = clamp(Math.max(0, repeatedOpenerRatio - 0.34) * 180, 0, 100);
         const punctuationRisk = clamp(100 - (punctuationVariety * 22), 0, 100);
@@ -568,18 +697,22 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         const formulaicBoost = clicheRisk > 70 && uniformSentenceRisk > 55 ? 22 : 0;
 
         const rawAiProbability =
-            (uniformSentenceRisk * 0.22) +
-            (predictabilityRisk * 0.15) +
-            (clicheRisk * 0.25) +
-            (transitionRisk * 0.14) +
-            (passiveRisk * 0.08) +
-            (openerRisk * 0.07) +
-            (punctuationRisk * 0.04) +
-            (paragraphSymmetryRisk * 0.03) +
+            (uniformSentenceRisk * 0.20) +
+            (predictabilityRisk * 0.12) +
+            (clicheRisk * 0.24) +
+            (transitionRisk * 0.12) +
+            (structureRisk * 0.12) +
+            (passiveRisk * 0.07) +
+            (openerRisk * 0.06) +
+            (punctuationRisk * 0.03) +
+            (paragraphSymmetryRisk * 0.02) +
+            (averageSentenceLengthRisk * 0.02) +
+            sentenceCountRisk +
             formulaicBoost;
 
         const confidence = clamp(wordCount / 120, 0.55, 1);
-        const aiProbability = Math.round(clamp(50 + ((rawAiProbability - 50) * confidence), 0, 100));
+        const calibratedProbability = 50 + ((rawAiProbability - 50) * confidence);
+        const aiProbability = Math.round(clamp(calibratedProbability, wordCount > 0 ? 3 : 0, wordCount > 0 ? 97 : 100));
         const confidenceLabel = confidence >= 0.85 ? 'High' : confidence >= 0.65 ? 'Medium' : 'Low';
 
         // 6. Readability Index (Flesch-Kincaid grade level).
@@ -594,6 +727,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             predictabilityRisk: Math.round(predictabilityRisk),
             clicheRisk: Math.round(clicheRisk),
             transitionRisk: Math.round(transitionRisk),
+            structureRisk: Math.round(structureRisk),
             passiveRisk: Math.round(passiveRisk),
             openerRisk: Math.round(openerRisk),
             punctuationRisk: Math.round(punctuationRisk),
@@ -607,6 +741,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             perplexityScore,
             clicheCount,
             transitionCount,
+            structureCount,
             foundCliches,
             passiveVoiceCount,
             passiveVoiceScore,
@@ -663,6 +798,11 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                 detail: `${analysis.transitionCount} formal transition marker${analysis.transitionCount === 1 ? '' : 's'} detected.`
             },
             {
+                key: 'structureRisk',
+                title: 'Formulaic structure',
+                detail: `${analysis.structureCount} AI-like sentence frame${analysis.structureCount === 1 ? '' : 's'} detected.`
+            },
+            {
                 key: 'predictabilityRisk',
                 title: 'Vocabulary predictability',
                 detail: `Vocabulary range score is ${analysis.perplexityScore}%.`
@@ -712,6 +852,9 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         }
         if (analysis.transitionCount > 2) {
             feedback.push('Use fewer formal transition words. Let sentence logic, topic sentences, and source references carry more of the flow.');
+        }
+        if (analysis.structureCount > 0) {
+            feedback.push('Rewrite formulaic frames such as broad “modern landscape” claims into specific, source-backed claims.');
         }
         if (analysis.readabilityGrade > 14) {
             feedback.push('Readability is very dense. Define specialist terms and break up long noun phrases where possible.');
@@ -905,12 +1048,21 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                 if (src.db === 'journal') { dbLabel = 'Academic Source Example'; dbClass = 'db-journal'; }
                 if (src.db === 'student') { dbLabel = 'Prior Draft Example'; dbClass = 'db-student'; }
                 if (src.db === 'internet') { dbLabel = 'Phrase Match Example'; dbClass = 'db-internet'; }
+                const hasLink = src.url && src.url !== '#';
+                const citationHtml = src.citation
+                    ? `<div class="source-citation">Citation: ${escapeHtml(src.citation)}</div>`
+                    : '';
+                const linkHtml = hasLink
+                    ? `<a class="source-link" href="${escapeHtml(src.url)}" target="_blank" rel="noopener noreferrer">Open source</a>`
+                    : '';
 
                 card.innerHTML = `
                     <div class="source-info">
                         <span class="source-db-pill ${dbClass}">${dbLabel}</span>
                         <div class="source-name">[Source ${idx + 1}] ${escapeHtml(src.name)}</div>
                         <div class="source-snippet">"${escapeHtml(src.snippet)}"</div>
+                        ${citationHtml}
+                        ${linkHtml}
                     </div>
                     <div class="source-percentage">${src.matchPercent}% Match</div>
                 `;
@@ -934,6 +1086,62 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         return clamp(pct, 0, 100);
     }
 
+    function getPublicSourceQueryLimit(wordCount) {
+        if (wordCount >= 8000) return 10;
+        if (wordCount >= 2500) return 8;
+        return 5;
+    }
+
+    function selectPublicSourceQueries(candidateSentences, maxQueries) {
+        const selected = [];
+        const seen = new Set();
+        const addCandidate = (candidate) => {
+            if (!candidate || seen.has(candidate.text)) return;
+            seen.add(candidate.text);
+            selected.push(candidate.text);
+        };
+
+        [...candidateSentences]
+            .sort((a, b) => b.text.length - a.text.length)
+            .slice(0, Math.ceil(maxQueries / 2))
+            .forEach(addCandidate);
+
+        if (candidateSentences.length > 0) {
+            const slots = Math.max(1, maxQueries - selected.length);
+            for (let i = 0; i < slots; i++) {
+                const position = slots === 1 ? 0.5 : i / (slots - 1);
+                const index = Math.round(position * (candidateSentences.length - 1));
+                addCandidate(candidateSentences[index]);
+            }
+        }
+
+        return selected.slice(0, maxQueries);
+    }
+
+    function getYearFromCrossref(item) {
+        const parts = item.issued?.['date-parts']?.[0] || item.published?.['date-parts']?.[0] || [];
+        return parts[0] || 'n.d.';
+    }
+
+    function formatCrossrefCitation(item, url) {
+        const title = item.title?.[0] || 'Untitled work';
+        const year = getYearFromCrossref(item);
+        const authors = item.author && item.author.length
+            ? item.author.slice(0, 3).map(author => {
+                const given = author.given ? `${author.given.charAt(0)}. ` : '';
+                return `${author.family || 'Unknown'}, ${given}`.trim();
+            }).join(', ')
+            : item.publisher || 'Unknown author';
+        const container = item['container-title']?.[0] || item.publisher || '';
+        const containerPart = container ? ` ${container}.` : '';
+        return `${authors} (${year}). ${title}.${containerPart} ${url !== '#' ? url : ''}`.trim();
+    }
+
+    function formatWikipediaCitation(title, url) {
+        const today = new Date().toISOString().slice(0, 10);
+        return `Wikipedia contributors. (${today}). ${title}. Wikipedia. ${url}`;
+    }
+
     async function runAcademicPlagiarismCheck(text) {
         if (!text || text.trim().length < 15) {
             return [];
@@ -941,15 +1149,16 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
 
         const rawSentences = splitIntoSentences(text);
         const candidateSentences = rawSentences
-            .map(s => s.trim())
-            .filter(s => {
-                const words = tokenizeWords(s);
-                return words.length >= 6 && s.length >= 35;
+            .map((s, index) => ({ text: s.trim(), index }))
+            .filter(candidate => {
+                const words = tokenizeWords(candidate.text);
+                return words.length >= 6 && candidate.text.length >= 35;
             });
 
-        candidateSentences.sort((a, b) => b.length - a.length);
-
-        const queries = candidateSentences.slice(0, 3);
+        const queries = selectPublicSourceQueries(
+            candidateSentences,
+            getPublicSourceQueryLimit(tokenizeWords(text).length)
+        );
         if (queries.length === 0) {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 20);
             if (lines.length > 0) {
@@ -976,7 +1185,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                     .then(r => r.json())
                     .then(data => {
                         const items = data.query?.search || [];
-                        items.slice(0, 2).forEach(item => {
+                        items.slice(0, 4).forEach(item => {
                             const url = `https://en.wikipedia.org/?curid=${item.pageid}`;
                             if (seenUrls.has(url)) return;
                             seenUrls.add(url);
@@ -994,7 +1203,8 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                                     snippet: cleanSnippet,
                                     matchPercent: clamp(overlap + Math.floor(Math.random() * 5), 8, 95),
                                     colorClass: 'color-db',
-                                    url: url
+                                    url: url,
+                                    citation: formatWikipediaCitation(item.title, url)
                                 });
                             }
                         });
@@ -1003,7 +1213,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             );
 
             // Crossref search
-            const crossrefUrl = `https://api.crossref.org/works?query=${encodeURIComponent(cleanQuery)}&rows=2`;
+            const crossrefUrl = `https://api.crossref.org/works?query=${encodeURIComponent(cleanQuery)}&rows=4`;
             promises.push(
                 fetch(crossrefUrl)
                     .then(r => r.json())
@@ -1027,7 +1237,8 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                                     snippet: `Registered metadata publication under DOI: ${item.DOI || 'N/A'}. Indexed in Crossref Polite Pool.`,
                                     matchPercent: clamp(overlap + Math.floor(Math.random() * 5), 8, 85),
                                     colorClass: 'color-pub',
-                                    url: doi
+                                    url: doi,
+                                    citation: formatCrossrefCitation(item, doi)
                                 });
                             }
                         });
@@ -1050,7 +1261,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             finalSources.push(src);
         });
 
-        return finalSources.slice(0, 6);
+        return finalSources.slice(0, 12);
     }
 
     async function renderPlagiarismResultsLive(text) {
@@ -1088,22 +1299,23 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                     if (src.db === 'internet') { dbLabel = 'Internet Match'; dbClass = 'db-internet'; }
 
                     const hasLink = src.url && src.url !== '#';
-                    const linkStyle = hasLink ? 'style="color: var(--color-primary); text-decoration: underline;"' : '';
+                    const citationHtml = src.citation
+                        ? `<div class="source-citation">Citation: ${escapeHtml(src.citation)}</div>`
+                        : '';
+                    const linkHtml = hasLink
+                        ? `<a class="source-link" href="${escapeHtml(src.url)}" target="_blank" rel="noopener noreferrer">Open source</a>`
+                        : '';
 
                     card.innerHTML = `
                         <div class="source-info">
                             <span class="source-db-pill ${dbClass}">${dbLabel}</span>
-                            <div class="source-name">[Source ${idx + 1}] <span ${linkStyle}>${escapeHtml(src.name)}</span></div>
+                            <div class="source-name">[Source ${idx + 1}] ${escapeHtml(src.name)}</div>
                             <div class="source-snippet">"${escapeHtml(src.snippet)}"</div>
+                            ${citationHtml}
+                            ${linkHtml}
                         </div>
                         <div class="source-percentage">${src.matchPercent}% Match</div>
                     `;
-
-                    if (hasLink) {
-                        card.addEventListener('click', () => {
-                            window.open(src.url, '_blank');
-                        });
-                    }
                     plagSourcesList.appendChild(card);
                 });
             }
@@ -1120,33 +1332,46 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
     }
 
     // Trigger AI Text Humanization Engine
-    function triggerHumanizeSequence() {
+    async function triggerHumanizeSequence() {
         const text = textInput.value;
         if (!text || text.trim().length < 10) return;
 
-        loadingSpinner.classList.remove('hidden');
-        updateLoadingProgress(0, "Structuring Sentences...", "Synthesizing paragraph layers...");
+        currentAnalysis = calculateAIMetrics(text);
 
-        setTimeout(() => {
-            updateLoadingProgress(40, "Polishing Syntax...", "Replacing formulaic vocabulary markers...");
-            setTimeout(() => {
-                updateLoadingProgress(80, "Varying Burstiness Index...", "Expanding syntactic complexity...");
-                setTimeout(() => {
-                    loadingSpinner.classList.add('hidden');
-                    
-                    const mode = humanizeModeSelect.value;
-                    humanizeEngine(text, mode);
-                    switchTab('tab-humanizer');
-                }, 400);
-            }, 600);
-        }, 500);
+        const wordCount = tokenizeWords(text).length;
+        const isLargeDocument = wordCount >= LARGE_DOCUMENT_WORD_THRESHOLD;
+
+        loadingSpinner.classList.remove('hidden');
+        updateLoadingProgress(
+            0,
+            isLargeDocument ? "Preparing Large Document..." : "Structuring Sentences...",
+            isLargeDocument ? `Processing ${wordCount.toLocaleString()} words as one document...` : "Synthesizing paragraph layers..."
+        );
+
+        await delay(50);
+
+        try {
+            const mode = humanizeModeSelect.value;
+            await humanizeEngine(text, mode, {
+                onProgress: (percent, title, subtitle) => updateLoadingProgress(percent, title, subtitle)
+            });
+            switchTab('tab-humanizer');
+        } catch (err) {
+            console.error("Revision failed:", err);
+            alert("Revision failed. Please try again with a smaller section or check the browser console for details.");
+        } finally {
+            loadingSpinner.classList.add('hidden');
+        }
     }
 
     // Core revision rules engine for clarity, specificity, and flow.
-    function humanizeEngine(text, mode) {
+    async function humanizeEngine(text, mode, options = {}) {
         let originalText = text;
         let paragraphs = text.split(/\n\n+/);
         let processedParagraphs = [];
+        const onProgress = typeof options.onProgress === 'function' ? options.onProgress : () => {};
+        const totalWords = tokenizeWords(text).length;
+        const isLargeDocument = totalWords >= LARGE_DOCUMENT_WORD_THRESHOLD;
         
         let clichesReplaced = 0;
         let passiveRephrased = 0;
@@ -1491,10 +1716,13 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             return s;
         }
 
-        // Apply conversions
-        paragraphs.forEach(para => {
+        // Apply conversions across the whole document while yielding between chunks for large files.
+        for (let paraIndex = 0; paraIndex < paragraphs.length; paraIndex++) {
+            const para = paragraphs[paraIndex];
             let pText = para.trim();
-            if (!pText) return;
+            if (!pText) {
+                continue;
+            }
 
             // Step A: Replace cliché AI words contextually with inflected suffix handling
             Object.keys(mapping).forEach(sourcePhrase => {
@@ -1605,7 +1833,19 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             let paraText = rhythmSentences.map(s => s.trim()).join(' ');
             paraText = correctArticles(paraText);
             processedParagraphs.push(paraText);
-        });
+
+            if (isLargeDocument && (paraIndex % 4 === 0 || paraIndex === paragraphs.length - 1)) {
+                const percent = Math.round(12 + ((paraIndex + 1) / Math.max(paragraphs.length, 1)) * 68);
+                onProgress(
+                    percent,
+                    "Revising Full Document...",
+                    `Processed ${Math.min(paraIndex + 1, paragraphs.length)} of ${paragraphs.length} paragraph blocks.`
+                );
+                await delay(0);
+            }
+        }
+
+        onProgress(84, "Rebalancing Paragraph Flow...", "Preserving full-document structure...");
 
         // Break/merge paragraphs slightly if they are too symmetrical to avoid paragraphSymmetryRisk
         if (processedParagraphs.length > 2) {
@@ -1650,17 +1890,31 @@ Quite simply, these technologies emphasize a transition that will showcase an an
         }
 
         humanizedOutputText = humanizedText;
+        onProgress(94, "Preparing Preview...", "Full revised document is ready for copy and download.");
 
         const ops = {
             clichesReplaced,
             passiveRephrased,
             sentencesSplit,
             sentencesCombined,
-            transitionsOptimized
+            transitionsOptimized,
+            totalWords,
+            isLargeDocument
         };
 
         // Render results side-by-side
         renderHumanizerView(originalText, humanizedText, dynamicHighlights, ops);
+    }
+
+    function getDiffPreview(text) {
+        if (text.length <= LARGE_DOCUMENT_PREVIEW_CHARS) {
+            return { text, truncated: false };
+        }
+
+        return {
+            text: text.slice(0, LARGE_DOCUMENT_PREVIEW_CHARS),
+            truncated: true
+        };
     }
 
     // Render Side-by-Side Comparison
@@ -1676,16 +1930,22 @@ Quite simply, these technologies emphasize a transition that will showcase an an
         scoreBeforeVal.textContent = `${currentAnalysis.aiProbability}%`;
         scoreAfterVal.textContent = `${targetAiProbability}%`;
 
-        // Highlight AI words in original text
-        let originalFormatted = original;
-        Object.keys(AI_CLICHES).forEach(cliche => {
-            const regex = new RegExp(`\\b(${escapeRegExp(cliche)})\\b`, 'gi');
-            originalFormatted = originalFormatted.replace(regex, '<span class="ai-cliche-highlight" title="AI Cliché">$1</span>');
-        });
-        diffOriginalText.innerHTML = originalFormatted;
+        const originalPreview = getDiffPreview(original);
+        const humanizedPreview = getDiffPreview(humanized);
+        const previewNote = (originalPreview.truncated || humanizedPreview.truncated)
+            ? `<div class="compare-summary-line">Large document preview shown. Copy or download uses the complete revised document.</div>`
+            : '';
 
-        // Highlight replaced/humanized changes in output text
-        let humanizedFormatted = humanized;
+        // Highlight formulaic words in original text preview.
+        let originalFormatted = escapeHtml(originalPreview.text);
+        Object.keys(AI_CLICHES).forEach(cliche => {
+            const regex = new RegExp(`\\b(${escapeRegExp(escapeHtml(cliche))})\\b`, 'gi');
+            originalFormatted = originalFormatted.replace(regex, '<span class="ai-cliche-highlight" title="Formulaic phrase">$1</span>');
+        });
+        diffOriginalText.innerHTML = previewNote + originalFormatted;
+
+        // Highlight replaced/revised changes in output text preview.
+        let humanizedFormatted = escapeHtml(humanizedPreview.text);
         const replaceHighlights = [
             'shifting domain', 'clear reflection', 'In addition', 'explore deeply', 'direct', 'novel',
             'As well', 'pivotal', 'detailed', 'dynamic', 'cultivate', 'Quite simply', 'transition',
@@ -1708,11 +1968,11 @@ Quite simply, these technologies emphasize a transition that will showcase an an
         });
 
         replaceHighlights.forEach(phrase => {
-            const escaped = escapeRegExp(phrase);
+            const escaped = escapeRegExp(escapeHtml(phrase));
             const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
             humanizedFormatted = humanizedFormatted.replace(regex, '<span class="diff-ins">$1</span>');
         });
-        diffHumanizedText.innerHTML = humanizedFormatted;
+        diffHumanizedText.innerHTML = previewNote + humanizedFormatted;
 
         // Setup Operations logs dynamically
         opsLogList.innerHTML = '';
@@ -1730,6 +1990,9 @@ Quite simply, these technologies emphasize a transition that will showcase an an
         }
         if (ops.transitionsOptimized > 0) {
             opsLogList.innerHTML += `<li>Optimized ${ops.transitionsOptimized} formulaic transition${ops.transitionsOptimized === 1 ? '' : 's'} and clause starters.</li>`;
+        }
+        if (ops.isLargeDocument) {
+            opsLogList.innerHTML += `<li>Processed the full ${ops.totalWords.toLocaleString()}-word document in responsive chunks; the diff view shows a preview only.</li>`;
         }
         
         opsLogList.innerHTML += `<li>Adjusted sentence length variation and vocabulary range for readability.</li>`;
@@ -1754,7 +2017,7 @@ Quite simply, these technologies emphasize a transition that will showcase an an
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Verify_AI_Humanized_Doc.txt`;
+        a.download = `Verify_AI_Revised_Doc.txt`;
         document.body.appendChild(a);
         a.click();
         
@@ -1802,61 +2065,27 @@ Quite simply, these technologies emphasize a transition that will showcase an an
     }
 
     // Document Comparison Handlers & Engine
-    function handleCompareFileUpload(e) {
+    async function handleCompareFileUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
 
         compareFilenameLabel.textContent = `Loading: ${file.name}...`;
         compareFilenameLabel.classList.add('loaded');
 
-        if (file.name.endsWith('.pdf')) {
-            if (typeof pdfjsLib === 'undefined') {
-                alert("PDF library not loaded. Verify your connection.");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const arrayBuffer = e.target.result;
-                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                    const totalPages = pdf.numPages;
-                    let fullText = '';
-
-                    for (let i = 1; i <= totalPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const textContent = await page.getTextContent();
-                        let lastY = null;
-                        let pageText = '';
-                        for (let item of textContent.items) {
-                            if (lastY !== null && Math.abs(item.transform[5] - lastY) > 5) {
-                                pageText += '\n';
-                            }
-                            pageText += item.str + ' ';
-                            lastY = item.transform[5];
-                        }
-                        fullText += pageText.trim() + '\n\n';
-                    }
-
-                    referenceText = fullText;
-                    compareFilenameLabel.textContent = `Loaded: ${file.name}`;
-                    btnRunCompare.disabled = false;
-                } catch (err) {
-                    console.error("PDF Parsing error: ", err);
-                    alert("Failed to parse reference PDF file.");
-                    compareFilenameLabel.textContent = "Error loading PDF";
-                    compareFilenameLabel.classList.remove('loaded');
-                    btnRunCompare.disabled = true;
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        } else {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                referenceText = e.target.result;
-                compareFilenameLabel.textContent = `Loaded: ${file.name}`;
-                btnRunCompare.disabled = false;
-            };
-            reader.readAsText(file);
+        try {
+            referenceText = await extractTextFromFile(file, {
+                titlePrefix: 'Importing Reference Document'
+            });
+            compareFilenameLabel.textContent = `Loaded: ${file.name}`;
+            btnRunCompare.disabled = false;
+        } catch (err) {
+            console.error("Reference import error:", err);
+            alert(err.message || "Failed to load reference file.");
+            compareFilenameLabel.textContent = `Error loading: ${file.name}`;
+            compareFilenameLabel.classList.remove('loaded');
+            btnRunCompare.disabled = true;
+        } finally {
+            loadingSpinner.classList.add('hidden');
         }
     }
 

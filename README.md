@@ -9,10 +9,13 @@ A browser-based dashboard for reviewing AI-like writing patterns, readability, f
 - **Writing-quality feedback**: Gives concrete revision suggestions for clarity, specificity, readability, and source-aware phrasing.
 - **Formulaic phrase scanner**: Highlights overused academic phrases that can make writing sound generic or over-polished.
 - **Revision diff view**: Produces a clarity-focused rewrite and shows before/after changes.
-- **Similarity scan modes**: Supports local phrase similarity and optional public-source lookup through Wikipedia Search and Crossref metadata.
-- **Local reference document checker**: Compares a draft against an uploaded `.txt` or `.pdf` reference using weighted 4-9 word phrase overlap and highlighted matches.
+- **Large-document revision**: Processes long documents in responsive chunks while preserving the full revised output for copy/download. The diff panel shows a preview for very large files to keep the browser responsive.
+- **Similarity scan modes**: Uses public-source lookup through Wikipedia Search and Crossref metadata by default, with a local offline phrase-similarity option available.
+- **Broad document import**: Supports `.docx`, `.pdf`, `.txt`, Markdown, RTF, HTML, CSV, TSV, and JSON files in the main editor and local comparison checker.
+- **Local reference document checker**: Compares a draft against an uploaded reference using weighted 4-9 word phrase overlap and highlighted matches.
 - **Integrity checklist**: Reminds users to verify citations, disclose AI assistance where required, and keep drafts or notes.
 - **Report export**: Downloads a JSON report with scores, explanation drivers, feedback, and checklist items.
+- **Light/dark theme**: Includes a saved light-mode toggle for brighter editing environments.
 
 ## Important Limits
 
@@ -32,7 +35,7 @@ The AI-likeness score combines multiple local signals:
 6. **Paragraph symmetry**: Checks whether paragraph lengths are unusually even.
 7. **Confidence**: Pulls short samples toward uncertainty instead of making strong claims.
 
-The local similarity checker compares uploaded reference material against the current draft using longer phrase spans. Longer contiguous overlaps carry more weight than isolated common phrases.
+Public-source lookup samples high-value sentences across short and long documents, including beginning, middle, and ending sections for continuity. It returns clickable source links and citation text where public metadata is available. The local similarity checker compares uploaded reference material against the current draft using longer phrase spans. Longer contiguous overlaps carry more weight than isolated common phrases.
 
 ## Getting Started
 
