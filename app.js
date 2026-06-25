@@ -917,7 +917,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         aiGaugeVal.textContent = `${currentAnalysis.aiProbability}%`;
         
         // Color transition for AI Gauge status
-        if (currentAnalysis.aiProbability > 75) {
+        if (currentAnalysis.aiProbability >= 70) {
             aiGaugeCircle.setAttribute('stroke', '#f43f5e'); // Rose
             aiGaugeStatus.textContent = "High AI-Like Signal";
             aiGaugeStatus.style.color = '#f43f5e';
