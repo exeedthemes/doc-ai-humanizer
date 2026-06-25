@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VERIFY.AI // Document AI Humanizer & Plagiarism Guard</title>
+    <title>VERIFY.AI // Document AI Analysis & Academic Integrity Guard</title>
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Humanize AI-generated text, check for AI detection probability, and run deep Turnitin-style plagiarism scans. A premium dashboard tool for academic integrity and content optimization.">
+    <meta name="description" content="Analyze AI-likeness, writing quality, citation readiness, and local document similarity. A dashboard tool for academic integrity and content review.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,13 +38,13 @@
                 </div>
                 <div class="brand-text">
                     <h1>VERIFY<span class="gradient-text">.AI</span></h1>
-                    <span class="tagline">HUMANIZER & PLAGIARISM GUARD</span>
+                    <span class="tagline">ANALYSIS & INTEGRITY GUARD</span>
                 </div>
             </div>
             <div class="header-actions">
                 <div class="status-indicator">
                     <span class="pulse-dot"></span>
-                    <span class="status-text">Academic Engines Active</span>
+                    <span class="status-text">Integrity Review Active</span>
                 </div>
             </div>
         </header>
@@ -83,7 +83,7 @@
                         <button id="btn-clear" class="btn btn-secondary" title="Clear input text">
                             Clear
                         </button>
-                        <button id="btn-sample" class="btn btn-secondary" title="Load a robotic AI sample text">
+                        <button id="btn-sample" class="btn btn-secondary" title="Load a formulaic AI-style sample text">
                             Load AI Sample
                         </button>
                         <div class="file-upload-wrapper">
@@ -97,13 +97,22 @@
 
                     <div class="humanizer-settings">
                         <div class="setting-group">
-                            <label for="humanize-mode">Rewrite Mode</label>
+                            <label for="humanize-mode">Revision Mode</label>
                             <div class="custom-select-wrapper">
                                 <select id="humanize-mode">
-                                    <option value="standard">Standard Humanizer (Balanced)</option>
-                                    <option value="academic" selected>Academic Humanizer (Turnitin Safe)</option>
-                                    <option value="creative">Creative & Flow Optimization</option>
+                                    <option value="standard">Standard Revision (Balanced)</option>
+                                    <option value="academic" selected>Academic Revision (Clarity)</option>
+                                    <option value="creative">Creative Flow Revision</option>
                                     <option value="casual">Conversational & Direct</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="setting-group">
+                            <label for="plagiarism-api-mode">Similarity Check Mode</label>
+                            <div class="custom-select-wrapper">
+                                <select id="plagiarism-api-mode">
+                                    <option value="local-sim" selected>Local Phrase Similarity (Offline)</option>
+                                    <option value="writing-review">Writing Pattern Review</option>
                                 </select>
                             </div>
                         </div>
@@ -115,7 +124,7 @@
                             <span class="scan-glow"></span>
                         </button>
                         <button id="btn-humanize" class="btn btn-accent btn-glow" disabled>
-                            <span class="btn-text">Humanize Content</span>
+                            <span class="btn-text">Revise for Clarity</span>
                         </button>
                     </div>
                 </div>
@@ -132,11 +141,11 @@
                     </button>
                     <button class="tab-btn" data-tab="tab-humanizer" data-require-text="true" id="tab-btn-humanizer">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-                        Humanizer Diff
+                        Revision Diff
                     </button>
                     <button class="tab-btn" data-tab="tab-plagiarism" data-require-text="true" id="tab-btn-plagiarism">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        Turnitin Scan
+                        Similarity Scan
                     </button>
                 </div>
 
@@ -156,7 +165,7 @@
                             <!-- High-Level Gauges -->
                             <div class="gauge-grid">
                                 <div class="gauge-card">
-                                    <div class="gauge-title">AI Probability</div>
+                                    <div class="gauge-title">AI-Likeness</div>
                                     <div class="gauge-wrapper">
                                         <svg class="progress-ring" width="120" height="120">
                                             <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
@@ -164,7 +173,7 @@
                                         </svg>
                                         <div class="gauge-value" id="ai-gauge-val">0%</div>
                                     </div>
-                                    <div class="gauge-status" id="ai-gauge-status">Highly Robotic</div>
+                                    <div class="gauge-status" id="ai-gauge-status">High AI-Like Signal</div>
                                 </div>
 
                                 <div class="gauge-card">
@@ -180,12 +189,24 @@
                                 </div>
                             </div>
 
+                            <div class="report-actions">
+                                <div class="confidence-card">
+                                    <div class="confidence-label">Confidence</div>
+                                    <div class="confidence-value" id="confidence-value">Low</div>
+                                    <p id="confidence-note">Longer passages produce more stable estimates.</p>
+                                </div>
+                                <button id="btn-export-report" class="btn btn-secondary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                    Export Report
+                                </button>
+                            </div>
+
                             <!-- Stylistic Breakdown -->
                             <div class="metrics-list">
                                 <div class="metric-row">
                                     <div class="metric-label">
-                                        <span>Burstiness (Sentence length variation)</span>
-                                        <span class="tooltip-trigger" title="Low burstiness means sentence lengths are extremely uniform, a major signature of ChatGPT/Claude.">?</span>
+                                        <span>Sentence Variation</span>
+                                        <span class="tooltip-trigger" title="Low variation means sentence lengths are unusually uniform. This is one signal among many, not proof of authorship.">?</span>
                                     </div>
                                     <div class="metric-bar-container">
                                         <div class="metric-bar" id="bar-burstiness" style="width: 0%"></div>
@@ -195,8 +216,8 @@
 
                                 <div class="metric-row">
                                     <div class="metric-label">
-                                        <span>Perplexity (Vocabulary richness)</span>
-                                        <span class="tooltip-trigger" title="AI models select highly predictable words. High perplexity indicates human-like creative vocabulary.">?</span>
+                                        <span>Vocabulary Range</span>
+                                        <span class="tooltip-trigger" title="Measures lexical diversity, repetition, and punctuation range. Formal human writing can still score as predictable.">?</span>
                                     </div>
                                     <div class="metric-bar-container">
                                         <div class="metric-bar" id="bar-perplexity" style="width: 0%"></div>
@@ -207,7 +228,7 @@
                                 <div class="metric-row">
                                     <div class="metric-label">
                                         <span>Passive-Voice Index</span>
-                                        <span class="tooltip-trigger" title="AI text relies heavily on passive constructions. Human writers tend toward active phrasing.">?</span>
+                                        <span class="tooltip-trigger" title="Passive constructions can be normal in academic writing, but heavy use can reduce clarity.">?</span>
                                     </div>
                                     <div class="metric-bar-container">
                                         <div class="metric-bar" id="bar-passive" style="width: 0%"></div>
@@ -216,13 +237,29 @@
                                 </div>
                             </div>
 
+                            <div class="insight-grid">
+                                <div class="insight-card">
+                                    <h4>Score Explanation</h4>
+                                    <div class="insight-list" id="explanation-list"></div>
+                                </div>
+                                <div class="insight-card">
+                                    <h4>Writing Quality Feedback</h4>
+                                    <div class="insight-list" id="writing-feedback-list"></div>
+                                </div>
+                            </div>
+
+                            <div class="integrity-card">
+                                <h4>Disclosure & Citation Checklist</h4>
+                                <div class="checklist-list" id="integrity-checklist"></div>
+                            </div>
+
                             <!-- AI Cliché Clue Card -->
                             <div class="cliche-card">
                                 <h4 class="cliche-title">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                                    AI Clichés & Helper Words Found
+                                    Formulaic Phrases Found
                                 </h4>
-                                <p class="cliche-desc">AI writing displays statistical markers using these words repetitively. They have been highlighted in your text.</p>
+                                <p class="cliche-desc">These phrases can make writing sound generic or over-polished when repeated. They are clues for revision, not proof of AI use.</p>
                                 <div class="cliche-tags" id="cliche-tags-list">
                                     <!-- Populated by JS -->
                                 </div>
@@ -230,30 +267,30 @@
                         </div>
                     </div>
 
-                    <!-- TAB 2: AI HUMANIZER DIFF VIEW -->
+                    <!-- TAB 2: REVISION DIFF VIEW -->
                     <div class="tab-pane" id="tab-humanizer">
                         <div class="placeholder-state" id="humanizer-placeholder">
                             <div class="placeholder-icon">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                             </div>
-                            <h3>Humanization Dashboard</h3>
-                            <p>Configure the mode on the left and click "Humanize Content" to optimize sentence structures and clean robotic phrasing.</p>
+                            <h3>Revision Dashboard</h3>
+                            <p>Configure the mode on the left and click "Revise for Clarity" to improve flow, phrasing, and readability.</p>
                         </div>
 
                         <div class="humanizer-results hidden" id="humanizer-results-view">
                             <div class="humanizer-summary-header">
-                                <div class="score-pill score-before">AI Score Before: <strong id="score-before-val">98%</strong></div>
+                                <div class="score-pill score-before">AI-Likeness Before: <strong id="score-before-val">98%</strong></div>
                                 <div class="arrow-indicator">➔</div>
-                                <div class="score-pill score-after">AI Score After: <strong id="score-after-val">4%</strong></div>
+                                <div class="score-pill score-after">AI-Likeness After: <strong id="score-after-val">4%</strong></div>
                             </div>
 
                             <div class="diff-split-container">
                                 <div class="diff-column">
-                                    <div class="diff-header">Robot (Original)</div>
+                                    <div class="diff-header">Original</div>
                                     <div class="diff-text-area" id="diff-original-text"></div>
                                 </div>
                                 <div class="diff-column">
-                                    <div class="diff-header">Humanized (Output)</div>
+                                    <div class="diff-header">Revised Output</div>
                                     <div class="diff-text-area" id="diff-humanized-text"></div>
                                 </div>
                             </div>
@@ -261,7 +298,7 @@
                             <div class="humanizer-actions">
                                 <button id="btn-copy-humanized" class="btn btn-secondary">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                    Copy Humanized Text
+                                    Copy Revised Text
                                 </button>
                                 <button id="btn-download-humanized" class="btn btn-primary">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
@@ -271,7 +308,7 @@
 
                             <!-- List of Operations Executed -->
                             <div class="operations-log-card">
-                                <h4 class="ops-title">Humanization Modifications</h4>
+                                <h4 class="ops-title">Revision Modifications</h4>
                                 <ul class="ops-list" id="ops-log-list">
                                     <li>Sentence length standard deviation increased by 142% (Burstiness enhancement).</li>
                                     <li>Replaced generic AI helper word transitions with conversational flow.</li>
@@ -281,14 +318,14 @@
                         </div>
                     </div>
 
-                    <!-- TAB 3: PLAGIARISM / TURNITIN SCAN -->
+                    <!-- TAB 3: SIMILARITY SCAN -->
                     <div class="tab-pane" id="tab-plagiarism">
                         <div class="placeholder-state" id="plagiarism-placeholder">
                             <div class="placeholder-icon">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
                             </div>
-                            <h3>Turnitin Simulation Scanner</h3>
-                            <p>Scan your document against academic journals, university repositories, and internet resources for matching citations.</p>
+                            <h3>Similarity Review</h3>
+                            <p>Review potential source overlap and citation risks before submission.</p>
                         </div>
 
                         <div class="plagiarism-results hidden" id="plagiarism-results-view">
@@ -304,12 +341,12 @@
                                     </div>
                                 </div>
                                 <div class="plag-meta">
-                                    <h3>Academic Plagiarism & Code-Match Scan</h3>
-                                    <p>Simulating deep structural analysis across global index databases. Checked against SafeAssign repository nodes, WCopyfind tokenizer engines, Submitty academic submissions, and Stanford MOSS code similarity signatures.</p>
+                                    <h3>Academic Similarity Review</h3>
+                                    <p>Local similarity estimates compare exact and near-exact phrase overlap. Results are educational estimates, not institutional database checks.</p>
                                     <div class="plag-legend">
-                                        <div class="legend-item"><span class="legend-color color-db"></span> WCopyfind Web Crawl</div>
-                                        <div class="legend-item"><span class="legend-color color-pub"></span> Submitty Academic Index</div>
-                                        <div class="legend-item"><span class="legend-color color-std"></span> SafeAssign Student Database</div>
+                                        <div class="legend-item"><span class="legend-color color-db"></span> Internet-like Phrase Source</div>
+                                        <div class="legend-item"><span class="legend-color color-pub"></span> Academic-style Source</div>
+                                        <div class="legend-item"><span class="legend-color color-std"></span> Prior Draft Source</div>
                                     </div>
                                 </div>
                             </div>
@@ -327,7 +364,7 @@
                         <div class="local-compare-card">
                             <div class="compare-header">
                                 <h3>Document Comparison Checker</h3>
-                                <p>Upload a source PDF, essay draft, or reference material to scan for exact word sequence overlaps.</p>
+                                <p>Upload a source PDF, essay draft, or reference material to review exact and near-exact phrase overlaps.</p>
                             </div>
                             <div class="compare-body">
                                 <div class="compare-upload-row">

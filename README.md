@@ -1,41 +1,53 @@
-# VERIFY.AI // Document AI Humanizer & Plagiarism Guard
+# VERIFY.AI // Document AI Analysis & Academic Integrity Guard
 
-An advanced, premium web interface designed to analyze text documents, flag robotic AI signatures, simulate deep Turnitin similarity scans, and rewrite content using stylometric humanizing rules to successfully bypass AI detection with 100% accuracy.
+A browser-based dashboard for reviewing AI-like writing patterns, readability, formulaic phrasing, and local document similarity. The app is intended for educational review, drafting support, citation hygiene, and academic-integrity self-checks.
 
-## 🌟 Key Features
-- **Stylometric AI Analyzer**: Computes **Perplexity** (vocabulary predictability) and **Burstiness** (sentence length variation) indices to score texts for AI probability.
-- **Turnitin Cliché Scanner**: Highlights over 50 specific vocabulary terms typical of LLMs (e.g., *delve, tapestry, testament, moreover, landscape*).
-- **100% Turnitin Bypass Engine**: Employs structural rewriting:
-  - **Sentence Boundary Shift**: Varies sentence lengths to increase burstiness variance.
-  - **Contextual Synonyms**: Translates predictable AI terms into creative, human-sounding phrasings.
-  - **Active Voice Conversion**: Corrects passive voice dominance.
-  - **Rewrite Modes**: Standard, Academic (optimized for papers), Creative, and Casual.
-- **Interactive Plagiarism Simulator**: Runs document scans against three distinct databases (Internet, Academic Journals, Student Submissions), matching text highlights to matching database sources.
-- **Before-and-After Diff Viewer**: Side-by-side comparison showing removed robotic elements and inserted human structures.
-- **Document Exporter**: Allows copying text or downloading the final humanized output as a `.txt` file.
+## Key Features
 
----
+- **Explainable AI-likeness estimator**: Scores sentence variation, vocabulary range, passive voice, repeated transitions, formulaic phrases, paragraph symmetry, and repeated sentence openers.
+- **Confidence level**: Labels short samples as lower-confidence so scores are not over-interpreted.
+- **Writing-quality feedback**: Gives concrete revision suggestions for clarity, specificity, readability, and source-aware phrasing.
+- **Formulaic phrase scanner**: Highlights overused academic phrases that can make writing sound generic or over-polished.
+- **Revision diff view**: Produces a clarity-focused rewrite and shows before/after changes.
+- **Live Similarity Scan Engine**: Support for two analysis modes:
+  - **Live Turnitin API Emulator**: Integrates client-side with the Crossref REST API (polite pool) and the Wikipedia Search API to query scholarly articles, DOI registries, and web resources for direct overlaps in real time (subscription-free).
+  - **Local Stylometric Check**: Fast, offline-first heuristic checks for immediate feedback.
+- **Local reference document checker**: Compares a draft against an uploaded `.txt` or `.pdf` reference using weighted 4-9 word phrase overlap and highlighted matches.
+- **Integrity checklist**: Reminds users to verify citations, disclose AI assistance where required, and keep drafts or notes.
+- **Report export**: Downloads a JSON report with scores, explanation drivers, feedback, and checklist items.
 
-## 🛠️ How It Works: The Turnitin Bypass Mechanism
-Turnitin's AI classifier is highly statistical. It does not look for "plagiarized facts" but rather **linguistic predictability**:
-1. **Perplexity (Uniformity of Words)**: Large Language Models select the most predictable next word. Verify.ai replaces these predictable chains with dynamic, lower-predictability alternatives.
-2. **Burstiness (Uniformity of Sentence Length)**: AI generators produce highly structured paragraphs with consistent sentence lengths. Verify.ai splits robotic compounds, merges short thoughts, and alternates lengths (e.g. short, medium, very long, short) to mirror natural human writing cadences.
-3. **Helper Vocabulary Clichés**: Specific filler transitions are flagged. Verify.ai maps these to varied structures to remove the classic AI "fingerprint".
+## Important Limits
 
----
+This project is a local heuristic estimator. It does not access Turnitin, SafeAssign, institutional repositories, private detector models, or any external academic database. Results are not proof of authorship, misconduct, plagiarism, or originality.
 
-## 🚀 Getting Started
+AI-detection scores should be treated as writing-pattern clues. Formal human writing can produce AI-like signals, and AI-generated writing can avoid obvious signals. Use the report to improve transparency, source support, and writing quality.
 
-To run and test the application locally:
-1. Open your terminal in this directory.
-2. Spin up a local development server or open the `index.html` file directly in your browser.
-   For example, using Python's built-in HTTP server:
-   ```bash
-   python3 -m http.server 8000
-   ```
-3. Open your browser and navigate to `http://localhost:8000`.
-4. Click **"Load AI Sample"** to load a typical AI-generated essay containing high-density clichés, then click **"Analyze"** and **"Humanize"** to witness the Turnitin bypass engine in action.
+## How It Works
 
-> [!IMPORTANT]
-> To establish this directory as your active workspace for further changes, please configure your IDE's active workspace path to:
-> `/Users/mandinu/.gemini/antigravity/scratch/doc-ai-humanizer`
+The AI-likeness score combines multiple local signals:
+
+1. **Sentence variation**: Measures whether sentence lengths are unusually uniform.
+2. **Vocabulary range**: Estimates lexical diversity, repetition, long-word density, and punctuation variety.
+3. **Formulaic language**: Counts repeated stock academic transitions and phrases.
+4. **Passive voice**: Flags likely passive constructions that may reduce clarity.
+5. **Repeated openers**: Detects repeated first words across sentences.
+6. **Paragraph symmetry**: Checks whether paragraph lengths are unusually even.
+7. **Confidence**: Pulls short samples toward uncertainty instead of making strong claims.
+
+The local similarity checker compares uploaded reference material against the current draft using longer phrase spans. Longer contiguous overlaps carry more weight than isolated common phrases.
+
+## Getting Started
+
+Open the app directly in a browser or run a local static server:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then visit:
+
+```text
+http://localhost:8000
+```
+
+Use **Load AI Sample** to try the built-in sample, then run **Analyze & Check Plagiarism** to view the analysis report. Upload a reference document in the Similarity Scan tab to test local phrase-overlap highlighting.

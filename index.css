@@ -724,6 +724,119 @@ body {
     align-self: flex-end;
 }
 
+.report-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.confidence-card {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+}
+
+.confidence-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+}
+
+.confidence-value {
+    font-family: var(--font-heading);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.confidence-card p {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+}
+
+.insight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 16px;
+}
+
+.insight-card,
+.integrity-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-md);
+    padding: 16px;
+}
+
+.integrity-card {
+    margin-bottom: 16px;
+}
+
+.insight-card h4,
+.integrity-card h4 {
+    font-family: var(--font-heading);
+    font-size: 13px;
+    font-weight: 650;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+}
+
+.insight-list,
+.checklist-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.insight-item,
+.checklist-item {
+    background: rgba(0, 0, 0, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.045);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+}
+
+.insight-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.insight-item-head strong {
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
+.insight-item-head span {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--color-warning);
+}
+
+.insight-item p,
+.checklist-item {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+@media (max-width: 720px) {
+    .report-actions,
+    .insight-grid {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+}
+
 /* Cliché Words Panel */
 .cliche-card {
     background: rgba(244, 63, 94, 0.03);
@@ -1345,9 +1458,40 @@ body {
     white-space: pre-wrap;
 }
 
+.compare-summary-line {
+    display: block;
+    margin-bottom: 12px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.16);
+    color: var(--color-warning);
+    font-size: 12px;
+    white-space: normal;
+}
+
 .compare-highlight {
     background: rgba(245, 158, 11, 0.25);
     border-bottom: 2px solid var(--color-warning);
     font-weight: 500;
     color: #ffb020;
+}
+
+/* Settings Row for Select Elements */
+.humanizer-settings {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    width: 100%;
+}
+
+.humanizer-settings .setting-group {
+    flex: 1;
+}
+
+@media (max-width: 600px) {
+    .humanizer-settings {
+        flex-direction: column;
+        gap: 12px;
+    }
 }
