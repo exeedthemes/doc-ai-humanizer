@@ -628,7 +628,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
         // Render UI Results
         renderDetectorResults();
         
-        if (plagiarismApiModeSelect && plagiarismApiModeSelect.value === 'live-api') {
+        if (plagiarismApiModeSelect && plagiarismApiModeSelect.value === 'public-source') {
             await renderPlagiarismResultsLive(text);
         } else {
             renderPlagiarismResults(text);
@@ -893,7 +893,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             plagSourcesList.innerHTML = `
                 <div class="placeholder-state" style="min-height: 120px;">
                     <h3>0 matches detected</h3>
-                    <p style="font-size: 12px;">This document matches zero plagiarism database nodes. Excellent work!</p>
+                    <p style="font-size: 12px;">No illustrative phrase matches were found in the local similarity estimate.</p>
                 </div>`;
         } else {
             sources.forEach((src, idx) => {
@@ -1040,21 +1040,6 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
 
         sources.sort((a, b) => b.matchPercent - a.matchPercent);
 
-        if (sources.length > 0 || (currentAnalysis && currentAnalysis.aiProbability > 50)) {
-            const studentMatchPercent = sources.length > 0 
-                ? Math.min(98, Math.round(sources[0].matchPercent * 1.05 + 2))
-                : Math.min(95, Math.round(30 + Math.random() * 25));
-
-            sources.push({
-                db: 'student',
-                name: `SafeAssign Repository Submission - Student Paper Ref #${Math.floor(100000 + Math.random() * 900000)}`,
-                snippet: `Matches paper submitted to University Student Repository. Heavy sequence alignment detected in student draft.`,
-                matchPercent: studentMatchPercent,
-                colorClass: 'color-std',
-                url: '#'
-            });
-        }
-
         sources.sort((a, b) => b.matchPercent - a.matchPercent);
 
         const finalSources = [];
@@ -1089,7 +1074,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                 plagSourcesList.innerHTML = `
                     <div class="placeholder-state" style="min-height: 120px;">
                         <h3>0 matches detected</h3>
-                        <p style="font-size: 12px;">This document matches zero plagiarism database nodes in Wikipedia or Crossref. Excellent work!</p>
+                        <p style="font-size: 12px;">No public-source phrase matches were found in Wikipedia or Crossref metadata.</p>
                     </div>`;
             } else {
                 sources.forEach((src, idx) => {
@@ -1098,8 +1083,8 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                     
                     let dbLabel = 'Internet Match';
                     let dbClass = 'db-internet';
-                    if (src.db === 'journal') { dbLabel = 'Academic Repository (Submitty)'; dbClass = 'db-journal'; }
-                    if (src.db === 'student') { dbLabel = 'Student Paper Archive (SafeAssign)'; dbClass = 'db-student'; }
+                    if (src.db === 'journal') { dbLabel = 'Crossref Metadata Match'; dbClass = 'db-journal'; }
+                    if (src.db === 'student') { dbLabel = 'Prior Draft Example'; dbClass = 'db-student'; }
                     if (src.db === 'internet') { dbLabel = 'Internet Match'; dbClass = 'db-internet'; }
 
                     const hasLink = src.url && src.url !== '#';
@@ -1109,7 +1094,7 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                         <div class="source-info">
                             <span class="source-db-pill ${dbClass}">${dbLabel}</span>
                             <div class="source-name">[Source ${idx + 1}] <span ${linkStyle}>${escapeHtml(src.name)}</span></div>
-                            <div class="source-snippet">"${src.snippet}"</div>
+                            <div class="source-snippet">"${escapeHtml(src.snippet)}"</div>
                         </div>
                         <div class="source-percentage">${src.matchPercent}% Match</div>
                     `;
@@ -1160,9 +1145,15 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
     // Core revision rules engine for clarity, specificity, and flow.
     function humanizeEngine(text, mode) {
         let originalText = text;
-        let paragraphs = text.split('\n\n');
+        let paragraphs = text.split(/\n\n+/);
         let processedParagraphs = [];
-        let operationsExecuted = [];
+        
+        let clichesReplaced = 0;
+        let passiveRephrased = 0;
+        let sentencesSplit = 0;
+        let sentencesCombined = 0;
+        let transitionsOptimized = 0;
+        let dynamicHighlights = [];
 
         // 1. Synonyms maps depending on Rewrite Mode selection
         const academicMapping = {
@@ -1291,16 +1282,231 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             };
         }
 
+        // Sub-function to perform sentence-level transformations
+        function humanizeSentence(sentence, rewriteMode) {
+            let s = sentence.trim();
+            if (s.length < 5) return s;
+
+            // Passive to Active voice conversions & common verb replacements
+            const passivePatterns = [
+                { regex: /\bis considered by\b/gi, rep: "is seen by" },
+                { regex: /\bcan be seen as\b/gi, rep: "shows" },
+                { regex: /\bhave been noted to\b/gi, rep: "often" },
+                { regex: /\bis representative of\b/gi, rep: "shows" },
+                { regex: /\bis defined as\b/gi, rep: "refers to" },
+                { regex: /\bis characterized by\b/gi, rep: "features" },
+                { regex: /\bis influenced by\b/gi, rep: "reflects" },
+                { regex: /\bcan be utilized to\b/gi, rep: "can help" },
+                { regex: /\bis required to\b/gi, rep: "must" },
+                { regex: /\bplays a key role in\b/gi, rep: "is key to" },
+                { regex: /\bplays a pivotal role in\b/gi, rep: "is crucial for" }
+            ];
+
+            passivePatterns.forEach(p => {
+                if (p.regex.test(s)) {
+                    s = s.replace(p.regex, p.rep);
+                    passiveRephrased++;
+                    dynamicHighlights.push(p.rep);
+                }
+            });
+
+            const generalPhrases = [
+                { regex: /\ba wide range of\b/gi, rep: "various" },
+                { regex: /\ba broad spectrum of\b/gi, rep: "many different" },
+                { regex: /\bthe vast majority of\b/gi, rep: "most" },
+                { regex: /\bdue to the fact that\b/gi, rep: "because" },
+                { regex: /\bin order to\b/gi, rep: "to" },
+                { regex: /\bas a means to\b/gi, rep: "to" },
+                { regex: /\bwith the purpose of\b/gi, rep: "to" },
+                { regex: /\bat this point in time\b/gi, rep: "now" },
+                { regex: /\bconduct an analysis of\b/gi, rep: "analyze" },
+                { regex: /\bmake a decision\b/gi, rep: "decide" },
+                { regex: /\bprovide assistance to\b/gi, rep: "help" },
+                { regex: /\bexhibit a tendency to\b/gi, rep: "tend to" },
+                { regex: /\bat the end of the day\b/gi, rep: "ultimately" },
+                { regex: /\bin light of the fact that\b/gi, rep: "given that" },
+                { regex: /\bon a daily basis\b/gi, rep: "daily" },
+                { regex: /\bserve to illustrate\b/gi, rep: "illustrate" },
+                { regex: /\ba wide variety of\b/gi, rep: "many" }
+            ];
+
+            generalPhrases.forEach(p => {
+                if (p.regex.test(s)) {
+                    s = s.replace(p.regex, p.rep);
+                    dynamicHighlights.push(p.rep);
+                }
+            });
+
+            // Mode specific contractions
+            if (rewriteMode === 'casual') {
+                const contractions = [
+                    { regex: /\bdoes not\b/gi, rep: "doesn't" },
+                    { regex: /\bcannot\b/gi, rep: "can't" },
+                    { regex: /\bit is\b/gi, rep: "it's" },
+                    { regex: /\bare not\b/gi, rep: "aren't" },
+                    { regex: /\bwas not\b/gi, rep: "wasn't" },
+                    { regex: /\bwere not\b/gi, rep: "weren't" },
+                    { regex: /\bwill not\b/gi, rep: "won't" },
+                    { regex: /\bdo not\b/gi, rep: "don't" },
+                    { regex: /\bwould not\b/gi, rep: "wouldn't" },
+                    { regex: /\bshould not\b/gi, rep: "shouldn't" },
+                    { regex: /\bhave not\b/gi, rep: "haven't" },
+                    { regex: /\bhas not\b/gi, rep: "hasn't" },
+                    { regex: /\bis not\b/gi, rep: "isn't" },
+                    { regex: /\bwhat is\b/gi, rep: "what's" },
+                    { regex: /\bthat is\b/gi, rep: "that's" },
+                    { regex: /\bthere is\b/gi, rep: "there's" }
+                ];
+                contractions.forEach(c => {
+                    if (c.regex.test(s)) {
+                        s = s.replace(c.regex, c.rep);
+                        dynamicHighlights.push(c.rep);
+                    }
+                });
+            }
+
+            // Restructure starting transition structures to bury or rephrase
+            const transitionRegex = /^(Furthermore|Moreover|Therefore|Additionally|Consequently|In addition|In conclusion|Undeniably|Obviously|Clearly|Importantly|Interestingly|Notably),\s+(.*)$/i;
+            const match = s.match(transitionRegex);
+            if (match) {
+                const trans = match[1].toLowerCase();
+                let rest = match[2];
+                let firstLetterLower = rest.charAt(0).toLowerCase();
+                let restNormalized = firstLetterLower + rest.slice(1);
+                
+                transitionsOptimized++;
+
+                if (Math.random() > 0.5) {
+                    const organicTrans = {
+                        'furthermore': ['Along with this', 'What is more', 'Besides'],
+                        'moreover': ['On top of that', 'Also', 'In addition'],
+                        'therefore': ['Because of this', 'So', 'Hence', 'Thus'],
+                        'additionally': ['Also', 'Plus', 'Beyond that'],
+                        'consequently': ['As a result', 'So', 'Hence'],
+                        'in addition': ['Also', 'Besides', 'Plus'],
+                        'in conclusion': ['Ultimately', 'In the end', 'To wrap up'],
+                        'undeniably': ['Indeed', 'Certainly', 'Clearly'],
+                        'obviously': ['Of course', 'Naturally', 'Clearly'],
+                        'clearly': ['Evidently', 'It is clear that', 'In plain terms'],
+                        'importantly': ['Crucially', 'First of all', 'Mainly'],
+                        'interestingly': ['Oddly enough', 'Intriguingly', 'Interestingly'],
+                        'notably': ['Specifically', 'Particularly']
+                    };
+                    const options = organicTrans[trans] || [match[1]];
+                    const selected = options[Math.floor(Math.random() * options.length)];
+                    s = selected + ", " + restNormalized;
+                    dynamicHighlights.push(selected);
+                } else {
+                    const pronouns = /^(he|she|it|they|we|this|these|those|the\s+\w+|a\s+\w+|an\s+\w+|our\s+\w+|their\s+\w+|my\s+\w+|some\s+\w+|all\s+\w+)\b/i;
+                    const pronounMatch = restNormalized.match(pronouns);
+                    
+                    if (pronounMatch) {
+                        const subject = pronounMatch[1];
+                        const remainder = restNormalized.slice(subject.length).trim();
+                        const transWord = {
+                            'furthermore': 'furthermore',
+                            'moreover': 'moreover',
+                            'therefore': 'therefore',
+                            'additionally': 'also',
+                            'consequently': 'consequently',
+                            'in addition': 'also',
+                            'in conclusion': 'ultimately',
+                            'undeniably': 'indeed',
+                            'obviously': 'obviously',
+                            'clearly': 'clearly',
+                            'importantly': 'importantly',
+                            'interestingly': 'interestingly',
+                            'notably': 'notably'
+                        }[trans] || trans;
+                        
+                        const cappedSubject = subject.charAt(0).toUpperCase() + subject.slice(1);
+                        s = `${cappedSubject}, ${transWord}, ${remainder}`;
+                        dynamicHighlights.push(transWord);
+                    } else {
+                        const alt = {
+                            'furthermore': 'Besides',
+                            'moreover': 'Also',
+                            'therefore': 'This is why',
+                            'additionally': 'Also',
+                            'consequently': 'So',
+                            'in addition': 'Plus',
+                            'in conclusion': 'Ultimately',
+                            'undeniably': 'Indeed',
+                            'obviously': 'Naturally',
+                            'clearly': 'Clearly',
+                            'importantly': 'Crucially',
+                            'interestingly': 'Intriguingly',
+                            'notably': 'Specifically'
+                        }[trans] || match[1];
+                        s = alt + ", " + restNormalized;
+                        dynamicHighlights.push(alt);
+                    }
+                }
+            }
+
+            // Rephrase starting structures: "It is [adjective] to [verb]..."
+            const itIsRegex = /^It\s+is\s+(crucial|important|vital|essential|necessary)\s+to\s+([a-z]+)\s+(.*)$/i;
+            const itIsMatch = s.match(itIsRegex);
+            if (itIsMatch) {
+                const adj = itIsMatch[1].toLowerCase();
+                const verb = itIsMatch[2].toLowerCase();
+                const rest = itIsMatch[3];
+                
+                transitionsOptimized++;
+
+                if (Math.random() > 0.5) {
+                    const ingVerb = verb.endsWith('e') ? verb.slice(0, -1) + 'ing' : (verb.endsWith('g') ? verb + 'ging' : verb + 'ing');
+                    s = ingVerb.charAt(0).toUpperCase() + ingVerb.slice(1) + " " + rest + " is " + adj;
+                    dynamicHighlights.push(ingVerb);
+                } else {
+                    const modal = (adj === 'crucial' || adj === 'vital' || adj === 'essential') ? 'must' : 'should';
+                    s = "We " + modal + " " + verb + " " + rest;
+                    dynamicHighlights.push(modal);
+                }
+            }
+
+            // Paraphrase Cliché AI starting phrases
+            const startPhrases = [
+                { pattern: /^In order to\s+(.*)$/i, replace: "To $1", phrase: "To" },
+                { pattern: /^Due to the fact that\s+(.*)$/i, replace: "Because $1", phrase: "Because" },
+                { pattern: /^At the present time,\s+(.*)$/i, replace: "Currently, $1", phrase: "Currently" },
+                { pattern: /^It is clear that\s+(.*)$/i, replace: "Clearly, $1", phrase: "Clearly" },
+                { pattern: /^It goes without saying that\s+(.*)$/i, replace: "Naturally, $1", phrase: "Naturally" },
+                { pattern: /^Needless to say,\s+(.*)$/i, replace: "Of course, $1", phrase: "Of course" },
+                { pattern: /^It is worth noting that\s+(.*)$/i, replace: "Note that $1", phrase: "Note that" },
+                { pattern: /^It should be emphasized that\s+(.*)$/i, replace: "Importantly, $1", phrase: "Importantly" },
+                { pattern: /^A growing body of research suggests that\s+(.*)$/i, replace: "Recent studies show that $1", phrase: "Recent studies show that" },
+                { pattern: /^As previously mentioned,\s+(.*)$/i, replace: "As noted, $1", phrase: "As noted" }
+            ];
+
+            for (let pair of startPhrases) {
+                if (pair.pattern.test(s)) {
+                    s = s.replace(pair.pattern, pair.replace);
+                    dynamicHighlights.push(pair.phrase);
+                    transitionsOptimized++;
+                    break;
+                }
+            }
+
+            return s;
+        }
+
         // Apply conversions
         paragraphs.forEach(para => {
-            let pText = para;
+            let pText = para.trim();
+            if (!pText) return;
 
-            // Step A: Replace cliché AI words contextually with inflected suffix handling (plural, past tense, progressive)
+            // Step A: Replace cliché AI words contextually with inflected suffix handling
             Object.keys(mapping).forEach(sourcePhrase => {
                 const regex = new RegExp(`\\b${sourcePhrase}(s|ed|ing)?\\b`, 'gi');
                 pText = pText.replace(regex, (matched, suffix) => {
                     const baseReplacement = mapping[sourcePhrase];
                     const inflected = inflectSynonym(sourcePhrase, baseReplacement, matched, suffix);
+                    clichesReplaced++;
+                    
+                    if (inflected.length > 2) {
+                        dynamicHighlights.push(inflected);
+                    }
                     
                     // Keep matching case capitalization
                     if (matched[0] === matched[0].toUpperCase()) {
@@ -1328,47 +1534,99 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
 
                 // Trim the sentence itself
                 sentence = sentence.trim();
-
-                // Convert typical passive AI phrasing to active human phrasing
-                sentence = sentence.replace(/\bis considered by\b/gi, "is seen by");
-                sentence = sentence.replace(/\bcan be seen as\b/gi, "shows");
-                sentence = sentence.replace(/\bhave been noted to\b/gi, "often");
-                sentence = sentence.replace(/\bis representative of\b/gi, "shows");
+                sentence = humanizeSentence(sentence, mode);
                 
                 // Break up long sentences containing coordinating conjunctions to vary burstiness
-                if (sentence.split(/\s+/).length > 22 && sentence.includes(", and ")) {
-                    const parts = sentence.split(", and ");
-                    if (parts.length === 2) {
-                        sentence = parts[0] + ". Additionally, " + parts[1].charAt(0).toLowerCase() + parts[1].slice(1);
+                if (sentence.split(/\s+/).length > 20) {
+                    let split = false;
+                    if (sentence.includes(", and ")) {
+                        const parts = sentence.split(", and ");
+                        if (parts.length === 2) {
+                            sentence = parts[0] + ". Additionally, " + parts[1].charAt(0).toLowerCase() + parts[1].slice(1);
+                            split = true;
+                        }
+                    } else if (sentence.includes(", but ")) {
+                        const parts = sentence.split(", but ");
+                        if (parts.length === 2) {
+                            sentence = parts[0] + ". However, " + parts[1].charAt(0).toLowerCase() + parts[1].slice(1);
+                            split = true;
+                        }
+                    } else if (sentence.includes(", while ")) {
+                        const parts = sentence.split(", while ");
+                        if (parts.length === 2) {
+                            sentence = parts[0] + ". At the same time, " + parts[1].charAt(0).toLowerCase() + parts[1].slice(1);
+                            split = true;
+                        }
+                    } else if (sentence.includes("; ")) {
+                        const parts = sentence.split("; ");
+                        if (parts.length === 2) {
+                            sentence = parts[0] + ". In fact, " + parts[1].charAt(0).toLowerCase() + parts[1].slice(1);
+                            split = true;
+                        }
                     }
-                }
-
-                // AI transitions to human equivalents
-                sentence = sentence.replace(/Additionally, it is/gi, "Besides, we find it");
-                sentence = sentence.replace(/Therefore, the/gi, "This is why the");
-                sentence = sentence.replace(/Undeniably, these/gi, "Quite simply, these");
-                sentence = sentence.replace(/\bit is crucial to\b/gi, "we must");
-                sentence = sentence.replace(/\bit is important to\b/gi, "we should");
-                sentence = sentence.replace(/\bserve to illustrate\b/gi, "illustrate");
-                sentence = sentence.replace(/\ba wide variety of\b/gi, "many");
-
-                // Inject contractions for casual mode to lower detection likelihood
-                if (mode === 'casual') {
-                    sentence = sentence.replace(/does not/gi, "doesn't");
-                    sentence = sentence.replace(/cannot/gi, "can't");
-                    sentence = sentence.replace(/it is/gi, "it's");
-                    sentence = sentence.replace(/are not/gi, "aren't");
+                    if (split) {
+                        sentencesSplit++;
+                    }
                 }
 
                 cleanedSentences.push(sentence);
             }
 
             // Step C: Apply Stylometric Rhythm Generator to break repetitive structures
+            const preRhythmCount = cleanedSentences.length;
             let rhythmSentences = applyRhythmModulation(cleanedSentences);
+            sentencesCombined += (preRhythmCount - rhythmSentences.length);
+
+            // Randomly insert brief qualifiers to break machine-like predictability (perplexity boost)
+            rhythmSentences = rhythmSentences.map(sent => {
+                let s = sent.trim();
+                let words = s.split(/\s+/);
+                
+                if (words.length > 15 && Math.random() > 0.7) {
+                    const helpers = {
+                        'standard': ['for the most part', 'arguably', 'to some extent'],
+                        'academic': ['arguably', 'typically', 'for all practical purposes', 'to a large degree'],
+                        'creative': ['perhaps inevitably', 'in many ways', 'almost silently'],
+                        'casual': ['honestly', 'basically', 'actually']
+                    }[mode] || ['typically'];
+                    
+                    const helper = helpers[Math.floor(Math.random() * helpers.length)];
+                    
+                    if (words.length > 8 && !words[3].includes(',') && !words[3].includes('.')) {
+                        words.splice(4, 0, `, ${helper},`);
+                        s = words.join(' ').replace(/\s+,\s+/g, ', ').replace(/\s+;\s+/g, '; ');
+                        dynamicHighlights.push(helper);
+                    }
+                }
+                
+                return s;
+            });
+
             let paraText = rhythmSentences.map(s => s.trim()).join(' ');
             paraText = correctArticles(paraText);
             processedParagraphs.push(paraText);
         });
+
+        // Break/merge paragraphs slightly if they are too symmetrical to avoid paragraphSymmetryRisk
+        if (processedParagraphs.length > 2) {
+            const lengths = processedParagraphs.map(p => p.split(/\s+/).length);
+            const mean = lengths.reduce((a,b) => a+b, 0) / lengths.length;
+            const variance = lengths.reduce((sum, len) => sum + Math.pow(len - mean, 2), 0) / lengths.length;
+            const stdDev = Math.sqrt(variance);
+            const cv = mean > 0 ? stdDev / mean : 0;
+            
+            if (cv < 0.15) {
+                let maxIdx = lengths.indexOf(Math.max(...lengths));
+                let paraToSplit = processedParagraphs[maxIdx];
+                let pSentences = paraToSplit.split(/(?<=[.!?])\s+/);
+                if (pSentences.length > 3) {
+                    let splitPoint = Math.floor(pSentences.length / 2);
+                    let part1 = pSentences.slice(0, splitPoint).join(' ');
+                    let part2 = pSentences.slice(splitPoint).join(' ');
+                    processedParagraphs.splice(maxIdx, 1, part1, part2);
+                }
+            }
+        }
 
         // Consolidate final humanized document
         let humanizedText = processedParagraphs.join('\n\n');
@@ -1393,12 +1651,20 @@ Quite simply, these technologies emphasize a transition that will showcase an an
 
         humanizedOutputText = humanizedText;
 
+        const ops = {
+            clichesReplaced,
+            passiveRephrased,
+            sentencesSplit,
+            sentencesCombined,
+            transitionsOptimized
+        };
+
         // Render results side-by-side
-        renderHumanizerView(originalText, humanizedText);
+        renderHumanizerView(originalText, humanizedText, dynamicHighlights, ops);
     }
 
     // Render Side-by-Side Comparison
-    function renderHumanizerView(original, humanized) {
+    function renderHumanizerView(original, humanized, highlights = [], ops = {}) {
         humanizerPlaceholder.classList.add('hidden');
         humanizerResultsView.classList.remove('hidden');
 
@@ -1413,7 +1679,7 @@ Quite simply, these technologies emphasize a transition that will showcase an an
         // Highlight AI words in original text
         let originalFormatted = original;
         Object.keys(AI_CLICHES).forEach(cliche => {
-            const regex = new RegExp(`\\b(${cliche})\\b`, 'gi');
+            const regex = new RegExp(`\\b(${escapeRegExp(cliche)})\\b`, 'gi');
             originalFormatted = originalFormatted.replace(regex, '<span class="ai-cliche-highlight" title="AI Cliché">$1</span>');
         });
         diffOriginalText.innerHTML = originalFormatted;
@@ -1435,31 +1701,52 @@ Quite simply, these technologies emphasize a transition that will showcase an an
             'major', 'guiding force', 'is seen by', 'shows', 'often', 'we must', 'we should', 'illustrate', 'many'
         ];
 
+        highlights.forEach(phrase => {
+            if (phrase && phrase.length > 2 && !replaceHighlights.includes(phrase)) {
+                replaceHighlights.push(phrase);
+            }
+        });
+
         replaceHighlights.forEach(phrase => {
-            const regex = new RegExp(`\\b(${phrase})\\b`, 'gi');
+            const escaped = escapeRegExp(phrase);
+            const regex = new RegExp(`\\b(${escaped})\\b`, 'gi');
             humanizedFormatted = humanizedFormatted.replace(regex, '<span class="diff-ins">$1</span>');
         });
         diffHumanizedText.innerHTML = humanizedFormatted;
 
-        // Setup Operations logs
-        opsLogList.innerHTML = `
-            <li>Sentence rhythm adjusted to improve readability and reduce monotonous structure.</li>
-            <li>Formulaic phrase markers (${currentAnalysis.clicheCount} found) revised into more specific wording.</li>
-            <li>Revised text now estimates at ${targetAiProbability}% AI-like signal in this local model.</li>
-        `;
+        // Setup Operations logs dynamically
+        opsLogList.innerHTML = '';
+        if (ops.clichesReplaced > 0) {
+            opsLogList.innerHTML += `<li>Replaced ${ops.clichesReplaced} formulaic academic phrase${ops.clichesReplaced === 1 ? '' : 's'} with clearer wording.</li>`;
+        }
+        if (ops.passiveRephrased > 0) {
+            opsLogList.innerHTML += `<li>Converted ${ops.passiveRephrased} passive construction${ops.passiveRephrased === 1 ? '' : 's'} to active voice.</li>`;
+        }
+        if (ops.sentencesSplit > 0) {
+            opsLogList.innerHTML += `<li>Split ${ops.sentencesSplit} long, monotonous sentence${ops.sentencesSplit === 1 ? '' : 's'} to improve burstiness.</li>`;
+        }
+        if (ops.sentencesCombined > 0) {
+            opsLogList.innerHTML += `<li>Combined ${ops.sentencesCombined} short sentence${ops.sentencesCombined === 1 ? '' : 's'} to generate smoother human rhythm.</li>`;
+        }
+        if (ops.transitionsOptimized > 0) {
+            opsLogList.innerHTML += `<li>Optimized ${ops.transitionsOptimized} formulaic transition${ops.transitionsOptimized === 1 ? '' : 's'} and clause starters.</li>`;
+        }
+        
+        opsLogList.innerHTML += `<li>Adjusted sentence length variation and vocabulary range for readability.</li>`;
+        opsLogList.innerHTML += `<li>Revised text now estimates at ${targetAiProbability}% AI-likeness in this local model.</li>`;
     }
 
-    // Copy Humanized Output to clipboard
+    // Copy revised output to clipboard
     function copyHumanizedText() {
         if (!humanizedOutputText) return;
         navigator.clipboard.writeText(humanizedOutputText).then(() => {
-            alert("Humanized text copied to clipboard successfully!");
+            alert("Revised text copied to clipboard successfully!");
         }).catch(err => {
             console.error("Clipboard error: ", err);
         });
     }
 
-    // Download Humanized text as file
+    // Download revised text as file
     function downloadHumanizedText() {
         if (!humanizedOutputText) return;
         

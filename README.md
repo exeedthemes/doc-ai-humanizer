@@ -9,9 +9,7 @@ A browser-based dashboard for reviewing AI-like writing patterns, readability, f
 - **Writing-quality feedback**: Gives concrete revision suggestions for clarity, specificity, readability, and source-aware phrasing.
 - **Formulaic phrase scanner**: Highlights overused academic phrases that can make writing sound generic or over-polished.
 - **Revision diff view**: Produces a clarity-focused rewrite and shows before/after changes.
-- **Live Similarity Scan Engine**: Support for two analysis modes:
-  - **Live Turnitin API Emulator**: Integrates client-side with the Crossref REST API (polite pool) and the Wikipedia Search API to query scholarly articles, DOI registries, and web resources for direct overlaps in real time (subscription-free).
-  - **Local Stylometric Check**: Fast, offline-first heuristic checks for immediate feedback.
+- **Similarity scan modes**: Supports local phrase similarity and optional public-source lookup through Wikipedia Search and Crossref metadata.
 - **Local reference document checker**: Compares a draft against an uploaded `.txt` or `.pdf` reference using weighted 4-9 word phrase overlap and highlighted matches.
 - **Integrity checklist**: Reminds users to verify citations, disclose AI assistance where required, and keep drafts or notes.
 - **Report export**: Downloads a JSON report with scores, explanation drivers, feedback, and checklist items.
