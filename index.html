@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERIFY.AI // Document AI Humanizer & Plagiarism Guard</title>
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Humanize AI-generated text, check for AI detection probability, and run deep Turnitin-style plagiarism scans. A premium dashboard tool for academic integrity and content optimization.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Main Style -->
+    <link rel="stylesheet" href="index.css">
+</head>
+<body>
+    <!-- Background Radial and Grid Glows -->
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-grid"></div>
+
+    <div class="app-container">
+        <!-- Top Navigation Header -->
+        <header class="app-header">
+            <div class="brand">
+                <div class="brand-logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 17L12 22L22 17" stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12L12 17L22 12" stroke="url(#logo-grad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="logo-grad" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#a855f7" />
+                                <stop offset="1" stop-color="#6366f1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>VERIFY<span class="gradient-text">.AI</span></h1>
+                    <span class="tagline">HUMANIZER & PLAGIARISM GUARD</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <div class="status-indicator">
+                    <span class="pulse-dot"></span>
+                    <span class="status-text">Academic Engines Active</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Layout -->
+        <main class="dashboard-grid">
+            
+            <!-- Left Panel: Text Inputs and Controls -->
+            <section class="panel editor-panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                        Source Document
+                    </h2>
+                    <div class="word-stats">
+                        <span id="char-count">0 characters</span>
+                        <span class="separator">•</span>
+                        <span id="word-count">0 words</span>
+                    </div>
+                </div>
+
+                <!-- Drag & Drop Zone / Textarea -->
+                <div class="textarea-wrapper" id="drop-zone">
+                    <textarea id="text-input" placeholder="Paste your essay, paper, or AI-generated text here (minimum 50 words recommended for accurate scoring)..."></textarea>
+                    
+                    <div class="upload-overlay" id="upload-overlay">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+                        <h3>Drag & Drop Document</h3>
+                        <p>Drop your .txt or .pdf file here to import</p>
+                    </div>
+                </div>
+
+                <!-- Input Controls -->
+                <div class="editor-controls">
+                    <div class="control-row">
+                        <button id="btn-clear" class="btn btn-secondary" title="Clear input text">
+                            Clear
+                        </button>
+                        <button id="btn-sample" class="btn btn-secondary" title="Load a robotic AI sample text">
+                            Load AI Sample
+                        </button>
+                        <div class="file-upload-wrapper">
+                            <label for="file-upload" class="btn btn-secondary file-upload-label">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                Import File
+                            </label>
+                            <input type="file" id="file-upload" accept=".txt,.pdf">
+                        </div>
+                    </div>
+
+                    <div class="humanizer-settings">
+                        <div class="setting-group">
+                            <label for="humanize-mode">Rewrite Mode</label>
+                            <div class="custom-select-wrapper">
+                                <select id="humanize-mode">
+                                    <option value="standard">Standard Humanizer (Balanced)</option>
+                                    <option value="academic" selected>Academic Humanizer (Turnitin Safe)</option>
+                                    <option value="creative">Creative & Flow Optimization</option>
+                                    <option value="casual">Conversational & Direct</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="btn-scan" class="btn btn-primary btn-glow" disabled>
+                            <span class="btn-text">Analyze & Check Plagiarism</span>
+                            <span class="scan-glow"></span>
+                        </button>
+                        <button id="btn-humanize" class="btn btn-accent btn-glow" disabled>
+                            <span class="btn-text">Humanize Content</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel: Reports, Stats, and Diff Viewer -->
+            <section class="panel results-panel">
+                
+                <!-- Report Tabs -->
+                <div class="tab-header">
+                    <button class="tab-btn active" data-tab="tab-detector" id="tab-btn-detector">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        AI Analysis
+                    </button>
+                    <button class="tab-btn" data-tab="tab-humanizer" data-require-text="true" id="tab-btn-humanizer">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                        Humanizer Diff
+                    </button>
+                    <button class="tab-btn" data-tab="tab-plagiarism" data-require-text="true" id="tab-btn-plagiarism">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Turnitin Scan
+                    </button>
+                </div>
+
+                <div class="tab-content-container">
+
+                    <!-- TAB 1: AI DETECTOR & STYLISTICS -->
+                    <div class="tab-pane active" id="tab-detector">
+                        <div class="placeholder-state" id="detector-placeholder">
+                            <div class="placeholder-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="11" y2="17"/></svg>
+                            </div>
+                            <h3>Waiting for Analysis</h3>
+                            <p>Enter text in the editor and click "Analyze" to scan for AI signatures and stylistic quality.</p>
+                        </div>
+
+                        <div class="detector-results hidden" id="detector-results-view">
+                            <!-- High-Level Gauges -->
+                            <div class="gauge-grid">
+                                <div class="gauge-card">
+                                    <div class="gauge-title">AI Probability</div>
+                                    <div class="gauge-wrapper">
+                                        <svg class="progress-ring" width="120" height="120">
+                                            <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+                                            <circle class="progress-ring-circle" id="ai-gauge-circle" stroke="#f43f5e" stroke-width="8" fill="transparent" r="50" cx="60" cy="60" stroke-dasharray="314.16" stroke-dashoffset="314.16"/>
+                                        </svg>
+                                        <div class="gauge-value" id="ai-gauge-val">0%</div>
+                                    </div>
+                                    <div class="gauge-status" id="ai-gauge-status">Highly Robotic</div>
+                                </div>
+
+                                <div class="gauge-card">
+                                    <div class="gauge-title">Readability Grade</div>
+                                    <div class="gauge-wrapper">
+                                        <svg class="progress-ring" width="120" height="120">
+                                            <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.05)" stroke-width="8" fill="transparent" r="50" cx="60" cy="60"/>
+                                            <circle class="progress-ring-circle" id="readability-gauge-circle" stroke="#a855f7" stroke-width="8" fill="transparent" r="50" cx="60" cy="60" stroke-dasharray="314.16" stroke-dashoffset="314.16"/>
+                                        </svg>
+                                        <div class="gauge-value" id="readability-gauge-val">G12</div>
+                                    </div>
+                                    <div class="gauge-status" id="readability-gauge-status">College Level</div>
+                                </div>
+                            </div>
+
+                            <!-- Stylistic Breakdown -->
+                            <div class="metrics-list">
+                                <div class="metric-row">
+                                    <div class="metric-label">
+                                        <span>Burstiness (Sentence length variation)</span>
+                                        <span class="tooltip-trigger" title="Low burstiness means sentence lengths are extremely uniform, a major signature of ChatGPT/Claude.">?</span>
+                                    </div>
+                                    <div class="metric-bar-container">
+                                        <div class="metric-bar" id="bar-burstiness" style="width: 0%"></div>
+                                    </div>
+                                    <div class="metric-value" id="val-burstiness">Low</div>
+                                </div>
+
+                                <div class="metric-row">
+                                    <div class="metric-label">
+                                        <span>Perplexity (Vocabulary richness)</span>
+                                        <span class="tooltip-trigger" title="AI models select highly predictable words. High perplexity indicates human-like creative vocabulary.">?</span>
+                                    </div>
+                                    <div class="metric-bar-container">
+                                        <div class="metric-bar" id="bar-perplexity" style="width: 0%"></div>
+                                    </div>
+                                    <div class="metric-value" id="val-perplexity">Low</div>
+                                </div>
+
+                                <div class="metric-row">
+                                    <div class="metric-label">
+                                        <span>Passive-Voice Index</span>
+                                        <span class="tooltip-trigger" title="AI text relies heavily on passive constructions. Human writers tend toward active phrasing.">?</span>
+                                    </div>
+                                    <div class="metric-bar-container">
+                                        <div class="metric-bar" id="bar-passive" style="width: 0%"></div>
+                                    </div>
+                                    <div class="metric-value" id="val-passive">High</div>
+                                </div>
+                            </div>
+
+                            <!-- AI Cliché Clue Card -->
+                            <div class="cliche-card">
+                                <h4 class="cliche-title">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                    AI Clichés & Helper Words Found
+                                </h4>
+                                <p class="cliche-desc">AI writing displays statistical markers using these words repetitively. They have been highlighted in your text.</p>
+                                <div class="cliche-tags" id="cliche-tags-list">
+                                    <!-- Populated by JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: AI HUMANIZER DIFF VIEW -->
+                    <div class="tab-pane" id="tab-humanizer">
+                        <div class="placeholder-state" id="humanizer-placeholder">
+                            <div class="placeholder-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                            </div>
+                            <h3>Humanization Dashboard</h3>
+                            <p>Configure the mode on the left and click "Humanize Content" to optimize sentence structures and clean robotic phrasing.</p>
+                        </div>
+
+                        <div class="humanizer-results hidden" id="humanizer-results-view">
+                            <div class="humanizer-summary-header">
+                                <div class="score-pill score-before">AI Score Before: <strong id="score-before-val">98%</strong></div>
+                                <div class="arrow-indicator">➔</div>
+                                <div class="score-pill score-after">AI Score After: <strong id="score-after-val">4%</strong></div>
+                            </div>
+
+                            <div class="diff-split-container">
+                                <div class="diff-column">
+                                    <div class="diff-header">Robot (Original)</div>
+                                    <div class="diff-text-area" id="diff-original-text"></div>
+                                </div>
+                                <div class="diff-column">
+                                    <div class="diff-header">Humanized (Output)</div>
+                                    <div class="diff-text-area" id="diff-humanized-text"></div>
+                                </div>
+                            </div>
+
+                            <div class="humanizer-actions">
+                                <button id="btn-copy-humanized" class="btn btn-secondary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    Copy Humanized Text
+                                </button>
+                                <button id="btn-download-humanized" class="btn btn-primary">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                                    Download (.txt)
+                                </button>
+                            </div>
+
+                            <!-- List of Operations Executed -->
+                            <div class="operations-log-card">
+                                <h4 class="ops-title">Humanization Modifications</h4>
+                                <ul class="ops-list" id="ops-log-list">
+                                    <li>Sentence length standard deviation increased by 142% (Burstiness enhancement).</li>
+                                    <li>Replaced generic AI helper word transitions with conversational flow.</li>
+                                    <li>Active voice conversions implemented across 4 phrases.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: PLAGIARISM / TURNITIN SCAN -->
+                    <div class="tab-pane" id="tab-plagiarism">
+                        <div class="placeholder-state" id="plagiarism-placeholder">
+                            <div class="placeholder-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            </div>
+                            <h3>Turnitin Simulation Scanner</h3>
+                            <p>Scan your document against academic journals, university repositories, and internet resources for matching citations.</p>
+                        </div>
+
+                        <div class="plagiarism-results hidden" id="plagiarism-results-view">
+                            <div class="plag-header-layout">
+                                <div class="plag-gauge">
+                                    <svg class="progress-ring" width="140" height="140">
+                                        <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.05)" stroke-width="10" fill="transparent" r="55" cx="70" cy="70"/>
+                                        <circle class="progress-ring-circle" id="plag-gauge-circle" stroke="#f59e0b" stroke-width="10" fill="transparent" r="55" cx="70" cy="70" stroke-dasharray="345.58" stroke-dashoffset="345.58"/>
+                                    </svg>
+                                    <div class="plag-gauge-inner">
+                                        <span class="plag-gauge-val" id="plag-percentage-val">0%</span>
+                                        <span class="plag-gauge-label">Similarity</span>
+                                    </div>
+                                </div>
+                                <div class="plag-meta">
+                                    <h3>Academic Plagiarism & Code-Match Scan</h3>
+                                    <p>Simulating deep structural analysis across global index databases. Checked against SafeAssign repository nodes, WCopyfind tokenizer engines, Submitty academic submissions, and Stanford MOSS code similarity signatures.</p>
+                                    <div class="plag-legend">
+                                        <div class="legend-item"><span class="legend-color color-db"></span> WCopyfind Web Crawl</div>
+                                        <div class="legend-item"><span class="legend-color color-pub"></span> Submitty Academic Index</div>
+                                        <div class="legend-item"><span class="legend-color color-std"></span> SafeAssign Student Database</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Source Matches List -->
+                            <div class="sources-container">
+                                <h4>Matching Sources Found (<span id="plag-matches-count">0</span>)</h4>
+                                <div class="sources-list" id="plag-sources-list">
+                                    <!-- Dynamic content -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Local Reference File Comparison Tool -->
+                        <div class="local-compare-card">
+                            <div class="compare-header">
+                                <h3>Document Comparison Checker</h3>
+                                <p>Upload a source PDF, essay draft, or reference material to scan for exact word sequence overlaps.</p>
+                            </div>
+                            <div class="compare-body">
+                                <div class="compare-upload-row">
+                                    <div class="file-upload-wrapper">
+                                        <label for="compare-file-upload" class="btn btn-secondary file-upload-label">
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                            Upload Reference File
+                                        </label>
+                                        <input type="file" id="compare-file-upload" accept=".txt,.pdf">
+                                    </div>
+                                    <span id="compare-filename-label" class="filename-label">No reference file loaded</span>
+                                    <button id="btn-run-compare" class="btn btn-primary" disabled>Run Comparison Check</button>
+                                </div>
+                                <div class="compare-results hidden" id="compare-results-view">
+                                    <div class="compare-gauge-row">
+                                        <div class="small-gauge">
+                                            <span class="compare-score" id="compare-similarity-percentage">0%</span>
+                                            <span class="compare-score-label">Similarity Index</span>
+                                        </div>
+                                        <div class="compare-status-text">
+                                            <h4 id="compare-status-title">No matching text sequences found</h4>
+                                            <p id="compare-status-subtitle">Your document is completely distinct from the uploaded reference file.</p>
+                                        </div>
+                                    </div>
+                                    <div class="highlighted-matches-wrapper">
+                                        <h4>Highlighted Reference Overlaps:</h4>
+                                        <div class="compare-diff-view" id="compare-diff-text"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+
+        <!-- Scanning Overlay Loading State -->
+        <div class="loading-overlay hidden" id="loading-spinner">
+            <div class="spinner-container">
+                <div class="spinner-core"></div>
+                <div class="spinner-ring"></div>
+                <h2 id="loading-title">Analyzing Semantics...</h2>
+                <p id="loading-subtitle">Computing stylometric vectors against target models</p>
+                <div class="loading-bar-wrapper">
+                    <div class="loading-bar-fill" id="loading-bar-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 Verify.ai Academic Systems. Optimized for high-fidelity humanization & integrity checking.</p>
+            <div class="footer-links">
+                <a href="#about" class="footer-link">Documentation</a>
+                <span class="separator">•</span>
+                <a href="#privacy" class="footer-link">Privacy Safeguard</a>
+            </div>
+        </footer>
+    </div>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <!-- Main Script -->
+    <script src="app.js"></script>
+</body>
+</html>
