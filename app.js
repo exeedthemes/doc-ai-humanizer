@@ -678,7 +678,16 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             'catalyst': 'driver',
             'inherent': 'intrinsic',
             'implicitly': 'indirectly',
-            'explicitly': 'expressly'
+            'explicitly': 'expressly',
+            'showcase': 'exhibit',
+            'demystify': 'clarify',
+            'transformative': 'highly influential',
+            'seamless': 'integrated',
+            'customary': 'conventional',
+            'game changer': 'significant development',
+            'cutting edge': 'state-of-the-art',
+            'in summary': 'to summarize',
+            'beacon': 'exemplar'
         };
 
         const casualMapping = {
@@ -719,7 +728,16 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             'catalyst': 'spark',
             'inherent': 'natural',
             'implicitly': 'under the surface',
-            'explicitly': 'out loud'
+            'explicitly': 'out loud',
+            'showcase': 'show',
+            'demystify': 'explain',
+            'transformative': 'life-changing',
+            'seamless': 'smooth',
+            'customary': 'usual',
+            'game changer': 'big deal',
+            'cutting edge': 'newest',
+            'in summary': 'in short',
+            'beacon': 'guide'
         };
 
         // Determine synonym dictionary
@@ -735,7 +753,16 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                 'crucial': 'profound',
                 'vital': 'integral',
                 'pivotal role': 'guiding force',
-                'catalyst': 'spark'
+                'catalyst': 'spark',
+                'showcase': 'display',
+                'demystify': 'shed light on',
+                'transformative': 'inspiring',
+                'seamless': 'fluid',
+                'customary': 'traditional',
+                'game changer': 'milestone',
+                'cutting edge': 'advanced',
+                'in summary': 'all in all',
+                'beacon': 'inspiration'
             };
         }
 
@@ -746,9 +773,9 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
             // Step A: Replace cliché AI words contextually with inflected suffix handling (plural, past tense, progressive)
             Object.keys(mapping).forEach(roboticWord => {
                 const regex = new RegExp(`\\b${roboticWord}(s|ed|ing)?\\b`, 'gi');
-                pText = pText.replace(regex, (matched) => {
+                pText = pText.replace(regex, (matched, suffix) => {
                     const baseReplacement = mapping[roboticWord];
-                    const inflected = inflectSynonym(roboticWord, baseReplacement, matched);
+                    const inflected = inflectSynonym(roboticWord, baseReplacement, matched, suffix);
                     
                     // Keep matching case capitalization
                     if (matched[0] === matched[0].toUpperCase()) {
@@ -769,10 +796,13 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
                 // If sentence is a separator (punctuation), just append it to previous element
                 if (/^[.!?]\s+$/.test(sentence)) {
                     if (cleanedSentences.length > 0) {
-                        cleanedSentences[cleanedSentences.length - 1] += sentence.trim() + " ";
+                        cleanedSentences[cleanedSentences.length - 1] += sentence.trim();
                     }
                     continue;
                 }
+
+                // Trim the sentence itself
+                sentence = sentence.trim();
 
                 // Convert typical passive AI phrasing to active human phrasing
                 sentence = sentence.replace(/\bis considered by\b/gi, "is seen by");
@@ -810,7 +840,9 @@ Undeniably, these technologies underscore a paradigm shift that will showcase a 
 
             // Step C: Apply Stylometric Rhythm Generator to break repetitive structures
             let rhythmSentences = applyRhythmModulation(cleanedSentences);
-            processedParagraphs.push(rhythmSentences.join(''));
+            let paraText = rhythmSentences.map(s => s.trim()).join(' ');
+            paraText = correctArticles(paraText);
+            processedParagraphs.push(paraText);
         });
 
         // Consolidate final humanized document
@@ -1070,39 +1102,82 @@ Quite simply, these technologies emphasize a transition that will showcase an an
         compareResultsView.classList.remove('hidden');
     }
 
-    function inflectSynonym(roboticWord, replacement, matched) {
-        if (matched.toLowerCase() === roboticWord.toLowerCase()) {
+    function inflectSynonym(roboticWord, replacement, matched, suffix) {
+        if (!suffix) {
+            // Check endsWith just in case
+            if (matched.toLowerCase().endsWith('ing') && !roboticWord.toLowerCase().endsWith('ing')) {
+                suffix = 'ing';
+            } else if (matched.toLowerCase().endsWith('ed') && !roboticWord.toLowerCase().endsWith('ed')) {
+                suffix = 'ed';
+            } else if (matched.toLowerCase().endsWith('s') && !roboticWord.toLowerCase().endsWith('s')) {
+                suffix = 's';
+            }
+        }
+        
+        if (!suffix) {
             return replacement;
         }
-        
-        if (matched.toLowerCase().endsWith('s') && !roboticWord.toLowerCase().endsWith('s')) {
-            if (replacement.endsWith('y')) {
-                return replacement.slice(0, -1) + 'ies';
+
+        // Helper to inflect a single word
+        function inflectWord(word, suf) {
+            const w = word.toLowerCase();
+            if (suf === 's') {
+                if (w.endsWith('y') && !w.endsWith('ay') && !w.endsWith('ey') && !w.endsWith('oy') && !w.endsWith('uy')) {
+                    return word.slice(0, -1) + 'ies';
+                }
+                if (w.endsWith('s') || w.endsWith('ch') || w.endsWith('sh') || w.endsWith('x') || w.endsWith('z')) {
+                    return word + 'es';
+                }
+                return word + 's';
             }
-            if (replacement.endsWith('s') || replacement.endsWith('ch') || replacement.endsWith('sh')) {
-                return replacement + 'es';
+            if (suf === 'ed') {
+                if (w === 'shake') return word[0] === word[0].toUpperCase() ? 'Shook' : 'shook';
+                if (w === 'run') return word[0] === word[0].toUpperCase() ? 'Ran' : 'ran';
+                if (w === 'build') return word[0] === word[0].toUpperCase() ? 'Built' : 'built';
+                if (w === 'grab') return word + 'bed';
+                
+                if (w.endsWith('e')) {
+                    return word + 'd';
+                }
+                if (w.endsWith('y') && !w.endsWith('ay') && !w.endsWith('ey') && !w.endsWith('oy') && !w.endsWith('uy')) {
+                    return word.slice(0, -1) + 'ied';
+                }
+                return word + 'ed';
             }
-            return replacement + 's';
-        }
-        
-        if (matched.toLowerCase().endsWith('ed') && !roboticWord.toLowerCase().endsWith('ed')) {
-            if (replacement.endsWith('e')) {
-                return replacement + 'd';
+            if (suf === 'ing') {
+                if (w === 'grab') return word + 'bing';
+                if (w.endsWith('e') && !w.endsWith('ee') && !w.endsWith('oe') && !w.endsWith('ye')) {
+                    return word.slice(0, -1) + 'ing';
+                }
+                return word + 'ing';
             }
-            if (replacement.endsWith('y')) {
-                return replacement.slice(0, -1) + 'ied';
-            }
-            return replacement + 'ed';
+            return word;
         }
 
-        if (matched.toLowerCase().endsWith('ing') && !roboticWord.toLowerCase().endsWith('ing')) {
-            if (replacement.endsWith('e')) {
-                return replacement.slice(0, -1) + 'ing';
+        // If replacement is a phrase, determine which word to inflect
+        if (replacement.includes(' ')) {
+            const parts = replacement.split(' ');
+            const firstWordLower = parts[0].toLowerCase();
+            
+            // List of words we inflect as the key action word of a phrase (verbs, and first-noun genitives)
+            const firstWordInflections = [
+                'explore', 'look', 'shake', 'clean', 'exemplar', 'model', 'beacon', 'driver', 'spark', 
+                'show', 'use', 'grab', 'cultivate', 'transition', 'utilize', 'highlight', 'emphasize', 
+                'transform', 'optimize', 'demonstrate', 'exhibit', 'present', 'display', 'clarify', 'explain'
+            ];
+            
+            if (firstWordInflections.includes(firstWordLower)) {
+                // Inflect the first word
+                parts[0] = inflectWord(parts[0], suffix);
+            } else {
+                // Inflect the last word (noun phrase e.g. "clear reflection")
+                const lastIdx = parts.length - 1;
+                parts[lastIdx] = inflectWord(parts[lastIdx], suffix);
             }
-            return replacement + 'ing';
+            return parts.join(' ');
         }
 
-        return replacement;
+        return inflectWord(replacement, suffix);
     }
 
     function applyRhythmModulation(sentences) {
@@ -1143,9 +1218,35 @@ Quite simply, these technologies emphasize a transition that will showcase an an
                     }
                 }
             }
-            result.push(current);
+            result.push(current.trim());
             i++;
         }
         return result;
+    }
+
+    function correctArticles(text) {
+        // Regex to match "a" or "an" followed by space and another word
+        return text.replace(/\b(a|an)\b\s+([a-zA-Z]+)/gi, (match, article, nextWord) => {
+            const firstLetter = nextWord[0].toLowerCase();
+            const startsWithVowelSound = ['a', 'e', 'i', 'o', 'u'].includes(firstLetter) || 
+                                         (firstLetter === 'h' && ['hour', 'honest', 'honor', 'heir'].includes(nextWord.toLowerCase()));
+            
+            // Special cases like "union", "university", "unique", "one" (consonant sounds starting with vowel letters)
+            const startsWithConsonantSoundVowel = ['union', 'university', 'unique', 'one', 'useful', 'user', 'european', 'eulogy'].some(w => nextWord.toLowerCase().startsWith(w));
+            
+            const isVowel = startsWithVowelSound && !startsWithConsonantSoundVowel;
+            
+            if (isVowel) {
+                if (article[0] === article[0].toUpperCase()) {
+                    return 'An ' + nextWord;
+                }
+                return 'an ' + nextWord;
+            } else {
+                if (article[0] === article[0].toUpperCase()) {
+                    return 'A ' + nextWord;
+                }
+                return 'a ' + nextWord;
+            }
+        });
     }
 });
